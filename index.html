@@ -35,10 +35,12 @@ main{display:grid;gap:18px;max-width:1560px;margin:0 auto;padding:8px 16px 16px;
   grid-template-columns:clamp(300px,min(33vw,calc(100vh - 320px)),500px) minmax(0,1fr);
   grid-template-columns:clamp(300px,min(33vw,calc(100dvh - 320px)),500px) minmax(0,1fr)}
 .wheel-panel,.side,.table-panel{min-width:0}
-@media (max-width:1050px){
+@media (max-width:1400px){
   header.brand{flex-direction:row;justify-content:space-between;padding:10px 16px 2px}
   .brand-main{align-items:flex-start}.brand-row .logo-mark:last-child{display:none}.brand-row{gap:12px}
   .top-tools{position:static}
+}
+@media (max-width:1050px){
   main{grid-template-columns:1fr;gap:12px}
   .wheel-panel{display:grid;gap:14px;align-items:start;
     grid-template-columns:clamp(240px,min(46vw,calc(100vh - 740px)),440px) minmax(0,1fr);
@@ -134,7 +136,8 @@ details.panel>summary h3{display:flex;justify-content:space-between;margin:0}det
     <div class="sub">Roulette &middot; Salon Privé</div>
   </div>
   <div class="top-tools">
-    <button class="icon-btn" id="voiceBtn" title="Dealer voice (speech)">Dealer: On</button>
+    <button class="icon-btn" id="voiceBtn" title="Dealer voice on/off">Dealer: On</button>
+    <button class="icon-btn" id="voicePick" title="Change dealer voice" style="display:none">🎙 Voice</button>
     <button class="icon-btn" id="muteBtn" title="Mute / unmute sound (M)"></button>
   </div>
 </header>
@@ -289,48 +292,69 @@ const Snd = {
   stopRoll(){ const r = this.roll; if (!r) return; this.roll = null; const t = this.ctx.currentTime;
     r.out.gain.setTargetAtTime(0, t, .06); setTimeout(() => { try { r.src.stop(); r.lfo.stop(); } catch(e){} }, 600); }
 };
-/* ================= DEALER VOICE — Web Speech API (anime-style “Cookie-chan”) ================= */
-const J = (ja, en) => ({ja, en});            // Japanese flourish: kana for ja-JP voices, romaji for others
+/* ================= DEALER VOICE — Web Speech API ================= */
+// Short, plain-English lines (only a couple of well-known anime words that English voices say cleanly)
 const LINES = {
-  hello:  [[J('はーい! ', 'Hai! '), 'Welcome to Cookies Casino! Place your bets, ', J('ね!', 'neh!')]],
-  place:  [['Place your bets, ', J('ね!', 'neh!')], [J('はーい! ', 'Hai! '), 'Place your bets, please!']],
-  spin:   [[J('いきます! ', 'Ikimasu! '), 'Here we go!'], ['Spinning! ', J('がんばって!', 'Ganbatte!')], [J('それっ! ', 'Sore! '), 'Good luck!']],
-  nmb:    [['No more bets! ', J('はい!', 'Hai!')], ['No more bets, ', J('ね!', 'neh!')]],
-  win:    [[J('やった! ', 'Yatta! '), 'You win!'], [J('やったね! ', 'Yatta neh! '), 'Winner, winner!'], ['You win! ', J('おめでとう!', 'Omedetou!')]],
-  bigwin: [[J('すごーい! ', 'Sugoi! '), 'Big win! ', J('やったね!', 'Yatta neh!')], [J('すごい すごい! ', 'Sugoi sugoi! '), 'Jackpot cookie!']],
-  lose:   [[J('あらあら, ', 'Ara ara, '), 'the house wins.'], [J('ざんねん... ', 'Zannen... '), 'better luck next spin!'], [J('あらら~ ', 'Arara... '), 'the house wins, ', J('ね.', 'neh.')]],
-  refill: [[J('だいじょうぶ! ', 'Daijoubu! '), 'Here are more cookies, on the house!']],
-  on:     [[J('はーい! ', 'Hai! '), 'Cookie-chan, your dealer, at your service!']]
+  hello:  [['Welcome to Cookies Casino!', 'Place your bets.']],
+  spin:   [['Here we go!'], ['Good luck!'], ['Spinning!']],
+  nmb:    [['No more bets.']],
+  win:    [['Yatta!', 'You win!'], ['You win!'], ['Winner!']],
+  bigwin: [['Sugoi!', 'Big win!'], ['Wow! Big win!']],
+  lose:   [['Aww.', 'The house wins.'], ['So close!', 'Next time.'], ['The house wins.']],
+  refill: [['More cookies, on the house!']],
+  on:     [['Hi! I\'m your dealer.']]
 };
 const ONES = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
 const TENS = ['','','twenty','thirty'];
-// numbers are always spelled out in English so a ja-JP voice reads “seventeen”, not 「じゅうなな」
-function numWords(n){ if (n === DZ) return 'double zero'; if (n < 20) return ONES[n]; const o = n % 10; return TENS[Math.floor(n/10)] + (o ? ' ' + ONES[o] : ''); }
+function numWords(n){ if (n === DZ) return 'double zero'; if (n < 20) return ONES[n]; const o = n % 10; return TENS[Math.floor(n/10)] + (o ? '-' + ONES[o] : ''); }
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 const Voice = {
-  ok: 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window, v:null, ja:false, primed:false, greeted:false,
-  pick(){
-    if (!this.ok) return; const vs = speechSynthesis.getVoices() || []; if (!vs.length) return;
-    const isJa = v => /^ja([-_]|$)/i.test(v.lang), isEn = v => /^en([-_]|$)/i.test(v.lang);
-    const jaFem = /kyoko|o-?ren|nanami|ayumi|haruka|mayu|shiori|sayaka|mizuki|aoi|google\s*日本語/i, jaMale = /hattori|otoya|ichiro|keita|daichi|naoki|takumi|kenji/i;
-    const enFem = /samantha|karen|moira|tessa|victoria|allison|ava|susan|zira|serena|fiona|kate|female|aria|jenny|libby|sonia|google us english|google uk english female|nicky|martha/i;
-    const ja = vs.filter(isJa), en = vs.filter(isEn);
-    const v = ja.find(v => /kyoko/i.test(v.name)) || ja.find(v => /o-?ren/i.test(v.name)) || ja.find(v => jaFem.test(v.name)) || ja.find(v => !jaMale.test(v.name))
-           || en.find(v => /samantha/i.test(v.name)) || en.find(v => enFem.test(v.name)) || en.find(v => v.default) || en[0] || vs[0];
-    this.v = v || null; this.ja = !!v && isJa(v); updateVoiceUI();
+  ok: 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window, v:null, opts:[], primed:false, greeted:false, lastAt:0,
+  // Ranked choices: clear female English voices first, then the Japanese "Anime (Kyoko)" option last
+  options(){
+    if (!this.ok) return [];
+    const vs = speechSynthesis.getVoices() || [];
+    const isEn = v => /^en([-_]|$)/i.test(v.lang), isJa = v => /^ja([-_]|$)/i.test(v.lang);
+    const FEM = ['samantha','ava','allison','susan','karen','moira','tessa','serena','kate','victoria','fiona','zoe','nicky','martha','aria','jenny','libby','sonia','zira','female','google us english','google uk english female'];
+    const MALE = /\b(daniel|alex|fred|tom|oliver|arthur|aaron|gordon|rishi|reed|ralph|albert|bruce|junior|lee|guy|david|mark|george|ryan|eddy|grandpa|rocko|male)\b/i;
+    const score = v => { const n = v.name.toLowerCase(); const i = FEM.findIndex(f => n.includes(f)); if (i < 0) return -1;
+      return 1000 - i*10 + (/enhanced|premium|natural|neural/i.test(v.name) ? 5 : 0) + (/^en[-_](us|gb)/i.test(v.lang) ? 2 : 0); };
+    const seen = new Set(), out = [];
+    const add = (v, label, kind) => { const key = v.name + '|' + v.lang; if (seen.has(key)) return; seen.add(key); out.push({v, label, kind}); };
+    vs.filter(v => isEn(v) && score(v) >= 0).sort((a, b) => score(b) - score(a)).forEach(v => add(v, shortName(v), 'en'));
+    if (!out.length){ const en = vs.filter(isEn); (en.filter(v => !MALE.test(v.name)).concat(en)).forEach(v => add(v, shortName(v), 'en')); }
+    const ja = vs.filter(isJa), jv = ja.find(v => /kyoko/i.test(v.name)) || ja.find(v => /o-?ren/i.test(v.name));
+    if (jv) add(jv, 'Anime (' + shortName(jv) + ')', 'ja');
+    if (!out.length && vs.length) add(vs.find(v => v.default) || vs[0], shortName(vs[0]), 'en');
+    return out;
   },
-  compose(parts){ return parts.map(p => typeof p === 'string' ? p : (this.ja ? p.ja : p.en)).join(''); },
-  say(parts){
-    if (!this.ok || !voiceOn || muted) return;
+  pick(){
+    if (!this.ok) return; const opts = this.options(); if (!opts.length) return; this.opts = opts;
+    const saved = LS.get('voiceName', null), o = (saved && opts.find(o => o.v.name === saved)) || opts[0];
+    this.v = o.v; this.kind = o.kind; updateVoiceUI();
+  },
+  cycle(){
+    if (!this.opts.length) this.pick(); if (!this.opts.length) return;
+    const i = this.opts.findIndex(o => this.v && o.v.name === this.v.name), o = this.opts[(i + 1) % this.opts.length];
+    this.v = o.v; this.kind = o.kind; LS.set('voiceName', o.v.name); updateVoiceUI();
+  },
+  current(){ return this.opts.find(o => this.v && o.v.name === this.v.name); },
+  utter(text){
+    const u = new SpeechSynthesisUtterance(text);
+    if (this.v){ u.voice = this.v; u.lang = this.v.lang; }
+    u.pitch = this.kind === 'ja' ? 1.4 : 1.25; u.rate = .95; u.volume = 1;
+    return u;
+  },
+  // parts → separate short utterances (e.g. "Seventeen. Black." then the flourish on its own)
+  say(parts, {force = false} = {}){
+    if (!this.ok || (!voiceOn && !force) || muted) return;
     if (!this.v) this.pick();
-    const text = Array.isArray(parts) ? this.compose(parts) : parts;
+    const list = Array.isArray(parts) ? parts : [parts], now = performance.now();
     try {
-      if (speechSynthesis.pending) speechSynthesis.cancel();          // never let stale lines pile up
-      const u = new SpeechSynthesisUtterance(text);
-      if (this.v){ u.voice = this.v; u.lang = this.v.lang; }
-      u.pitch = 1.7; u.rate = 1.1; u.volume = .95;
+      if (speechSynthesis.pending && now - this.lastAt > 3500) speechSynthesis.cancel();   // drop stale queued lines only
       if (speechSynthesis.paused) speechSynthesis.resume();
-      speechSynthesis.speak(u); this.last = text;
+      for (const t of list) if (t) speechSynthesis.speak(this.utter(t));
+      this.lastAt = now; this.last = list.join(' ');
     } catch(e){}
   },
   line(key){ const L = LINES[key]; if (L) this.say(L[Math.floor(Math.random()*L.length)]); },
@@ -338,15 +362,19 @@ const Voice = {
   prime(ev){
     if (!this.ok || this.primed) return; this.primed = true;
     if (!this.v) this.pick();
-    const t = ev && ev.target, onSpin = t && t.closest && t.closest('#spinBtn, #voiceBtn, #muteBtn');
-    if (voiceOn && !muted && !onSpin && this.v){ this.greeted = true; this.line('hello'); }
+    const t = ev && ev.target, onBtn = t && t.closest && t.closest('#spinBtn, #voiceBtn, #voicePick, #muteBtn');
+    if (voiceOn && !muted && !onBtn && this.v){ this.greeted = true; this.line('hello'); }
     else { try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch(e){} }
   }
 };
+function shortName(v){ return v.name.replace(/\s*\(.*$/, '').replace(/^(Microsoft|Google|Apple)\s+/, '').replace(/\s+(Online|Desktop)$/i, '').split(/\s+-\s+/)[0]; }
 if (Voice.ok){ Voice.pick(); try { speechSynthesis.addEventListener('voiceschanged', () => Voice.pick()); } catch(e){ speechSynthesis.onvoiceschanged = () => Voice.pick(); } }
-function updateVoiceUI(){ const vb = document.getElementById('voiceBtn'); if (!vb) return;
-  const nm = Voice.v ? Voice.v.name.replace(/\s*\(.*$/, '').replace(/^(Microsoft|Google)\s+/, '').split(/\s+/)[0] : '';
-  vb.textContent = 'Dealer: ' + (voiceOn ? 'On' : 'Off') + (voiceOn && nm ? ' · ' + nm : ''); vb.classList.toggle('off', !voiceOn); }
+function updateVoiceUI(){
+  const vb = document.getElementById('voiceBtn'), vp = document.getElementById('voicePick'); if (!vb) return;
+  vb.textContent = 'Dealer: ' + (voiceOn ? 'On' : 'Off'); vb.classList.toggle('off', !voiceOn);
+  if (vp){ const o = Voice.current(); vp.textContent = '🎙 ' + (o ? o.label : 'Voice'); vp.style.display = voiceOn && Voice.opts.length ? '' : 'none';
+    vp.title = Voice.opts.length > 1 ? 'Tap to change the dealer voice (' + Voice.opts.length + ' available)' : 'Dealer voice'; }
+}
 function speak(text){ Voice.say(text); }
 
 /* ================= SVG DEFS — cookie chips & dolly ================= */
@@ -829,9 +857,7 @@ async function resolveRound(n){
   spinHistory.unshift({n:name, c:col, t:type}); spinHistory = spinHistory.slice(0, 300); LS.set('history', spinHistory); renderBoard();
   const badge = $('#badge'); badge.className = 'result-badge ' + col; badge.textContent = name; void badge.offsetWidth; badge.classList.add('show');
   flash(col === 'green' ? `${name} — green` : `${name} ${col} · ${n % 2 ? 'odd' : 'even'} · ${n <= 18 ? 'low' : 'high'}`, 'info');
-  { const hit = [...bets.keys()].some(id => SPOTMAP[id].nums.includes(n));
-    const flourish = col === 'green' ? J(' あら!', ' Ara!') : hit ? J(' すごい!', ' Sugoi!') : (Math.random() < .5 ? J(' はい!', ' Hai!') : '');
-    Voice.say([cap(numWords(n)) + ', ' + col + '!', flourish]); }
+  Voice.say([cap(numWords(n)) + '. ' + cap(col) + '.']);      // crisp, on its own — the win/lose flourish follows separately
   await wait(650);
   const ws = SPOTMAP[n === DZ ? '00' : n === 0 ? '0' : 's'+n];
   winNum = n; setWinHL(n, true);
@@ -957,6 +983,7 @@ function wireButtons(){
   const vb = $('#voiceBtn');
   updateVoiceUI(); if (!Voice.ok) vb.style.display = 'none';
   vb.onclick = () => { voiceOn = !voiceOn; LS.set('voiceOn', voiceOn); updateVoiceUI(); if (voiceOn){ Voice.primed = true; Voice.line('on'); } else speechSynthesis.cancel(); };
+  $('#voicePick').onclick = () => { Voice.primed = true; Voice.cycle(); try { speechSynthesis.cancel(); } catch(e){} Voice.say(['Seventeen. Black.', 'Yatta! You win!']); };
   document.addEventListener('keydown', e => {
     if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
     if (e.code === 'Space'){ e.preventDefault(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); startSpin(); }
