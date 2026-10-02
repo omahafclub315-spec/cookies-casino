@@ -126,6 +126,43 @@ details.panel>summary h3{display:flex;justify-content:space-between;margin:0}det
 #tip.show{opacity:1}
 #tip .t{color:var(--gold2);font-weight:600;letter-spacing:.04em}
 #tip .m{color:#aaa}
+
+.lb-panel{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;background:linear-gradient(135deg,rgba(214,59,125,.35),rgba(18,6,12,.9) 60%)}
+.lb-panel:hover{border-color:var(--gold2)}
+.lb-panel h3{display:flex;justify-content:space-between;margin-bottom:4px}.lb-panel h3 span{color:var(--gold2)}
+#lbPanelInfo{font-size:13px;color:#f3e3ea}#lbPanelInfo b{color:#fff}
+.modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,2,7,.66);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .2s}
+.modal.show{opacity:1}.modal[hidden]{display:none}
+.sheet{position:relative;width:min(560px,94vw);max-height:min(88vh,860px);max-height:min(88dvh,860px);display:flex;flex-direction:column;border-radius:20px;overflow:hidden;
+  background:linear-gradient(180deg,#2a0b1c,#12040c);border:1.5px solid var(--gold);box-shadow:0 24px 60px rgba(0,0,0,.7),0 0 0 6px rgba(216,178,90,.12);transform:translateY(10px);transition:transform .2s}
+.modal.show .sheet{transform:none}
+.sheet-hd{padding:16px 20px 12px;background:radial-gradient(ellipse at 50% 0%,#e0508f,#a8245e 60%,#6e1240);border-bottom:1px solid rgba(243,220,149,.5);text-align:center}
+.sheet-hd h2{margin:0;font-family:Didot,"Bodoni 72","Playfair Display",Georgia,serif;font-weight:400;letter-spacing:.16em;text-transform:uppercase;font-size:24px;
+  background:linear-gradient(180deg,#fff7da,#f2d684 45%,#c8963a 60%,#fff1c2);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+.sheet-hd p{margin:4px 0 0;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:#ffe3ef}
+.sheet .x{position:absolute;right:10px;top:10px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,240,220,.6);background:rgba(0,0,0,.25);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.sheet-bd{padding:14px 18px 6px;overflow:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0}
+#lbForm{margin-bottom:14px;padding:12px 14px;border:1px solid rgba(216,178,90,.35);border-radius:12px;background:rgba(0,0,0,.25)}
+#lbFormTitle{font-size:13px;color:var(--gold2);margin-bottom:8px;letter-spacing:.04em}
+.lb-input-row{display:flex;gap:8px}
+#lbNick{flex:1;min-width:0;font:inherit;font-size:17px;padding:11px 13px;border-radius:10px;border:1.5px solid rgba(216,178,90,.55);background:#fff8f0;color:#3a0c22;outline:none}
+#lbNick:focus{border-color:#ff86bb;box-shadow:0 0 0 3px rgba(255,134,187,.35)}
+#lbErr{min-height:18px;margin-top:6px;font-size:12.5px;color:#ffb4c8}
+.lb-form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+#lbMe{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;padding:10px 14px;border-radius:12px;background:rgba(214,59,125,.18);border:1px solid rgba(255,134,187,.45);font-size:13.5px}
+#lbMe[hidden],#lbForm[hidden]{display:none}
+#lbMe b{color:#fff}
+.lb-list{display:flex;flex-direction:column;gap:4px}
+.lb-row{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.04);font-size:15px}
+.lb-row .rk{font-family:Georgia,serif;color:#cdb47a;font-size:14px}.lb-row.top1 .rk,.lb-row.top2 .rk,.lb-row.top3 .rk{font-size:20px}
+.lb-row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
+.lb-row .pk{font-family:Georgia,serif;font-variant-numeric:tabular-nums;color:var(--gold2);font-size:16px}
+.lb-row.me{background:linear-gradient(90deg,rgba(255,105,170,.42),rgba(214,59,125,.18));box-shadow:inset 0 0 0 1.5px #ff86bb}
+.lb-row.me .nm:after{content:"  (you)";color:#ffd1e6;font-size:12px}
+.lb-gap{text-align:center;color:#a98;letter-spacing:.3em}
+.lb-empty{text-align:center;color:#d9c3cc;padding:22px 6px}
+.sheet-ft{padding:10px 18px 14px;font-size:11.5px;color:#b9a3ae;text-align:center;border-top:1px solid rgba(216,178,90,.18)}
 </style>
 </head>
 <body>
@@ -146,6 +183,7 @@ details.panel>summary h3{display:flex;justify-content:space-between;margin:0}det
     <div class="wheel-wrap" id="wheelWrap"><canvas id="wheel" aria-label="Roulette wheel"></canvas><div class="result-badge" id="badge"></div></div>
     <div class="side">
     <div class="panel"><h3>Last Numbers</h3><div class="board" id="board"></div><div class="stats" id="stats"></div></div>
+    <button class="panel lb-panel" id="lbOpen" type="button"><h3>🏆 Leaderboard <span>View ›</span></h3><div id="lbPanelInfo"></div></button>
     <div class="panel"><h3>Wheel</h3>
       <div class="seg" id="typeSeg"><button data-type="american">Double Zero &middot; American</button><button data-type="european">Single Zero &middot; European</button></div>
     </div>
@@ -175,6 +213,22 @@ details.panel>summary h3{display:flex;justify-content:space-between;margin:0}det
   </section>
 </main>
 <div id="tip"></div>
+<div class="modal" id="lbModal" hidden role="dialog" aria-modal="true" aria-labelledby="lbTitle">
+  <div class="sheet">
+    <div class="sheet-hd"><h2 id="lbTitle">Leaderboard</h2><p>Biggest bankroll ever reached</p><button class="x" id="lbClose" aria-label="Close">×</button></div>
+    <div class="sheet-bd">
+      <form id="lbForm" autocomplete="off">
+        <div id="lbFormTitle">Choose a nickname to join the leaderboard</div>
+        <div class="lb-input-row"><input id="lbNick" maxlength="16" minlength="2" placeholder="e.g. CookieMonster" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="done"></div>
+        <div id="lbErr"></div>
+        <div class="lb-form-actions"><button type="button" class="btn" id="lbLater">Maybe later</button><button type="submit" class="btn spin" id="lbJoin" style="padding:10px 22px;font-size:13px">Save</button></div>
+      </form>
+      <div id="lbMe" hidden><span>You: <b id="lbMeName"></b> · best <b id="lbMePeak"></b> · <b id="lbMeRank">—</b></span><button type="button" class="btn" id="lbRename" style="min-height:34px;padding:7px 11px">Rename</button></div>
+      <div class="lb-list" id="lbList"></div>
+    </div>
+    <div class="sheet-ft" id="lbFoot"></div>
+  </div>
+</div>
 <script>
 'use strict';
 /* Cookies Casino — Roulette (single-file, offline) */
@@ -899,6 +953,7 @@ async function resolveRound(n){
   else if (wagered > 0){ mw.textContent = '$0'; mw.className = 'v'; flash(`${name}${colName} — house wins · place your bets`, 'info'); }
   else flash(`${name}${colName} — place your bets`, 'info');
   updateMeters(); saveBank(); updateButtons();
+  LB.afterSpin();
   if (bankroll < 1){ await wait(1800); bankroll = START_BANK; updateMeters(); saveBank(); Snd.chips(5); flash('Out of chips — here\'s a fresh $300 on the house 🍪', 'win'); Voice.line('refill'); updateButtons(); }
 }
 /* ================= UI: meters, board, buttons, placard ================= */
@@ -968,7 +1023,7 @@ function wireButtons(){
     if (need > bankroll){ flash(`Rebet needs ${fmt(need)} — bankroll is ${fmt(bankroll)}`, 'warn'); return; }
     const op = []; for (const [id, amt] of lastBets){ if (!SPOTMAP[id]) continue; const a = placeBet(id, amt, {record:false, silent:true}); if (a) op.push({id, amt:a}); }
     undoStack.push(op); Snd.chips(3); flash(`Rebet — ${fmt(tableTotal())} on the table`); updateButtons(); };
-  $('#buyBtn').onclick = () => { if (phase !== 'betting') return; if (!confirm('Reset your bankroll to $300? Chips on the table are returned first.')) return;
+  $('#buyBtn').onclick = () => { if (phase !== 'betting') return; if (!confirm('Reset your bankroll to $300? Chips on the table are returned first. Your best bankroll on the leaderboard is kept.')) return;
     for (const [id, amt] of [...bets]) removeBet(id, amt); undoStack = []; bankroll = START_BANK; shownBank = 0; updateMeters(); saveBank(); Snd.chips(5); flash('Buy-in: $300 in chips'); updateButtons(); };
   document.querySelectorAll('#typeSeg button').forEach(b => b.onclick = () => { if (phase !== 'betting' || bets.size || b.dataset.type === type) return;
     type = b.dataset.type; LS.set('type', type); clearResultMarkers(); lastBets = new Map(); undoStack = [];
@@ -986,6 +1041,7 @@ function wireButtons(){
   $('#voicePick').onclick = () => { Voice.primed = true; Voice.cycle(); try { speechSynthesis.cancel(); } catch(e){} Voice.say(['Seventeen. Black.', 'Yatta! You win!']); };
   document.addEventListener('keydown', e => {
     if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    if (!document.getElementById('lbModal').hidden) return;          // leaderboard open: no game shortcuts
     if (e.code === 'Space'){ e.preventDefault(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); startSpin(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); $('#undoBtn').click(); }
     else if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'm') toggleMute();
@@ -995,6 +1051,106 @@ function wireButtons(){
   const unlock = ev => { Snd.ensure(); Voice.prime(ev); };
   ['touchend','click','keydown'].forEach(t => document.addEventListener(t, unlock, {capture:true, passive:true}));
 }
+
+/* ================= ONLINE LEADERBOARD — peak bankroll (Supabase RPC via plain fetch) ================= */
+const LB = {
+  url: 'https://goohcqtscqojwofeopxo.supabase.co/rest/v1',
+  key: 'sb_publishable_3wJJwbmnlKE1X4EPSvKuNg_UHYlYssc',                                   // public publishable key — table is RLS-locked, writes only via submit_score()
+  id: LS.get('lb.id', null), secret: LS.get('lb.secret', null), nick: LS.get('lb.nick', null),
+  peak: +LS.get('lb.peak', 0) || 0, spins: +LS.get('lb.spins', 0) || 0, sentPeak: +LS.get('lb.sentPeak', 0) || 0,
+  rank: LS.get('lb.rank', null), timer: null, busy: false, retry: 0,
+  save(){ ['id','secret','nick','peak','spins','sentPeak','rank'].forEach(k => LS.set('lb.' + k, this[k])); },
+  ensureId(){
+    if (this.id && this.secret) return;
+    const b = new Uint8Array(32); crypto.getRandomValues(b);
+    const hex = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    this.id = (crypto.randomUUID ? crypto.randomUUID() : `${hex.slice(0,8)}-${hex.slice(8,12)}-4${hex.slice(13,16)}-${(8 + (b[8] & 3)).toString(16)}${hex.slice(17,20)}-${hex.slice(20,32)}`);
+    crypto.getRandomValues(b); this.secret = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    this.save();
+  },
+  async rpc(name, body){
+    const ctl = 'AbortController' in window ? new AbortController() : null, to = ctl && setTimeout(() => ctl.abort(), 9000);
+    try {
+      const r = await fetch(`${this.url}/rpc/${name}`, {method:'POST', headers:{apikey:this.key, 'Content-Type':'application/json'}, body:JSON.stringify(body), signal: ctl ? ctl.signal : undefined});
+      if (!r.ok) throw new Error('http ' + r.status);
+      return await r.json();
+    } finally { if (to) clearTimeout(to); }
+  },
+  cleanNick(s){ return String(s || '').replace(/[^A-Za-z0-9 _.!?'~*-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16); },
+  notePeak(){ const b = Math.floor(bankroll); if (b > this.peak){ this.peak = b; this.save(); } renderLBPanel(); },
+  afterSpin(){ this.spins++; this.notePeak(); this.schedule(); },
+  schedule(delay = 1500){ if (!this.nick || this.peak <= this.sentPeak) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.submit(), delay); },
+  async submit(nick){
+    if (this.busy){ this.schedule(2500); return {ok:false, error:'busy'}; }
+    this.ensureId(); const useNick = nick || this.nick; if (!useNick) return {ok:false, error:'no_nick'};
+    this.busy = true;
+    try {
+      const res = await this.rpc('submit_score', {p_player_id:this.id, p_secret:this.secret, p_nickname:useNick, p_peak:Math.floor(this.peak), p_spins:this.spins});
+      if (res && res.ok){ this.nick = res.nickname; this.sentPeak = Math.max(this.sentPeak, +res.peak || 0); this.rank = res.rank; this.retry = 0; this.save(); renderLBPanel(); }
+      else if (res && res.error === 'rate_limited' && this.retry++ < 3){ this.busy = false; await wait(3300); return this.submit(nick); }
+      return res || {ok:false, error:'no_response'};
+    } catch(e){ return {ok:false, error:'offline'}; }          // fail silently offline; we retry after the next spin
+    finally { this.busy = false; }
+  },
+  async board(){ return this.rpc('get_leaderboard', {p_player_id: this.id || null}); }
+};
+function renderLBPanel(){
+  const p = document.getElementById('lbPanelInfo'); if (!p) return;
+  p.innerHTML = LB.nick
+    ? `<b></b> · best <b>${fmt(LB.peak)}</b>${LB.rank ? ` · rank <b>#${LB.rank}</b>` : ''}`
+    : `Your best: <b>${fmt(LB.peak)}</b> · tap to join`;
+  if (LB.nick) p.querySelector('b').textContent = LB.nick;
+}
+const LBUI = {
+  open(focusName){
+    const m = $('#lbModal'); m.hidden = false; requestAnimationFrame(() => m.classList.add('show'));
+    LS.set('lb.asked', true); this.showForm(!LB.nick || focusName); this.refresh();
+  },
+  close(){ const m = $('#lbModal'); m.classList.remove('show'); setTimeout(() => { m.hidden = true; }, 200); },
+  showForm(on){
+    $('#lbForm').hidden = !on; $('#lbMe').hidden = on || !LB.nick; $('#lbErr').textContent = '';
+    $('#lbFormTitle').textContent = LB.nick ? 'Change your nickname' : 'Choose a nickname to join the leaderboard';
+    $('#lbLater').textContent = LB.nick ? 'Cancel' : 'Maybe later';
+    if (on){ const i = $('#lbNick'); i.value = LB.nick || ''; setTimeout(() => { try { i.focus(); } catch(e){} }, 60); }
+    if (LB.nick){ $('#lbMeName').textContent = LB.nick; $('#lbMePeak').textContent = fmt(LB.peak); }
+  },
+  async join(){
+    const raw = $('#lbNick').value, nick = LB.cleanNick(raw), err = $('#lbErr'), btn = $('#lbJoin');
+    if (nick.length < 2){ err.textContent = 'Nickname must be 2–16 letters, numbers or spaces.'; return; }
+    btn.disabled = true; btn.textContent = 'Saving…'; err.textContent = '';
+    LB.notePeak(); const res = await LB.submit(nick);
+    btn.disabled = false; btn.textContent = 'Save';
+    if (res.ok){ Snd.chips(3); flash(`Welcome to the leaderboard, ${LB.nick}!`, 'win'); this.showForm(false); this.refresh(); }
+    else err.textContent = ({nickname_taken:'That nickname is taken — try another.', bad_nickname:'Nickname must be 2–16 letters, numbers or spaces.',
+      offline:'Can’t reach the leaderboard right now — check your connection and try again.', rate_limited:'Too fast — try again in a few seconds.'})[res.error] || 'Couldn’t save — please try again.';
+  },
+  async refresh(){
+    const list = $('#lbList'), foot = $('#lbFoot'); foot.textContent = 'Loading…';
+    try {
+      const d = await LB.board(); list.innerHTML = '';
+      const row = (r, me) => { const el = document.createElement('div'); el.className = 'lb-row' + (me ? ' me' : '') + (r.rank <= 3 ? ' top' + r.rank : '');
+        el.innerHTML = '<span class="rk"></span><span class="nm"></span><span class="pk"></span>';
+        el.children[0].textContent = r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : '#' + r.rank; el.children[1].textContent = r.nickname; el.children[2].textContent = fmt(r.peak); return el; };
+      (d.top || []).forEach(r => list.appendChild(row(r, r.me)));
+      if (d.me && !(d.top || []).some(r => r.me)){ const gap = document.createElement('div'); gap.className = 'lb-gap'; gap.textContent = '···'; list.appendChild(gap); list.appendChild(row(d.me, true)); }
+      if (!(d.top || []).length) list.innerHTML = '<div class="lb-empty">No scores yet — be the first cookie on the board!</div>';
+      if (d.me){ LB.rank = d.me.rank; LB.save(); renderLBPanel(); $('#lbMeRank').textContent = '#' + d.me.rank; }
+      foot.textContent = `${d.total} player${d.total === 1 ? '' : 's'} · ranked by biggest bankroll ever reached · updated ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+      const meEl = list.querySelector('.me'); if (meEl && meEl.scrollIntoView) meEl.scrollIntoView({block:'nearest'});
+    } catch(e){ foot.textContent = 'Leaderboard unavailable — you may be offline.'; }
+  },
+  wire(){
+    $('#lbOpen').onclick = () => { Snd.ensure(); this.open(); };
+    $('#lbClose').onclick = () => this.close();
+    $('#lbModal').addEventListener('click', e => { if (e.target.id === 'lbModal') this.close(); });
+    $('#lbLater').onclick = () => { if (LB.nick) this.showForm(false); else this.close(); };
+    $('#lbRename').onclick = () => this.showForm(true);
+    $('#lbForm').addEventListener('submit', e => { e.preventDefault(); this.join(); });
+    $('#lbNick').addEventListener('input', e => { const c = e.target.value.replace(/[^A-Za-z0-9 _.!?'~*-]/g, ''); if (c !== e.target.value) e.target.value = c; });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#lbModal').hidden) this.close(); });
+    window.addEventListener('online', () => LB.schedule(500));
+  }
+};
 
 /* ================= Main loop & boot ================= */
 let lastNow = performance.now();
@@ -1011,10 +1167,12 @@ buildDefs(); buildSpots(); buildTable(); wireTable(); buildChips(); wireButtons(
 { const last = spinHistory.find(h => h.t === type), order = ORDER[type], n = last ? (last.n === '00' ? DZ : +last.n) : 0;
   ball.rel = -Math.PI/2 + Math.max(0, order.indexOf(n)) * TAU/order.length; }
 renderBoard(); renderPlacard(); shownBank = bankroll; updateMeters(); updateButtons();
+LBUI.wire(); LB.notePeak(); LB.schedule(2500);
+if (!LB.nick && !LS.get('lb.asked', false)) setTimeout(() => { if (phase === 'betting' && $('#lbModal').hidden) LBUI.open(); }, 1200);
 if (innerWidth >= 1300 && innerHeight >= 980) $('#limitsBox').open = true;
 new ResizeObserver(wheelResize).observe($('#wheelWrap')); wheelResize();
 requestAnimationFrame(loop);
-window.__cc = { voice: Voice, numWords, LINES, get state(){ const o = ORDER[type]; return {phase, bankroll, bets:[...bets], type, spinning: !!spin, nmb: !!(spin && spin.nmb), ballPocket: lab(o[mod(Math.round((ball.rel + Math.PI/2)/(TAU/o.length)), o.length)])}; }, spots: () => SPOTS, ORDER, place: placeBet, spin: startSpin };
+window.__cc = { lb: LB, lbui: LBUI, voice: Voice, numWords, LINES, get state(){ const o = ORDER[type]; return {phase, bankroll, bets:[...bets], type, spinning: !!spin, nmb: !!(spin && spin.nmb), ballPocket: lab(o[mod(Math.round((ball.rel + Math.PI/2)/(TAU/o.length)), o.length)])}; }, spots: () => SPOTS, ORDER, place: placeBet, spin: startSpin };
 </script>
 </body>
 </html>
