@@ -1,6 +1,7 @@
 /* Cookies Casino — shared theme for the lobby and the card/dice/slot game pages */
 :root{--gold:#d8b25a;--gold2:#f3dc95;--ink:#efe6cf;--pink:#ff86bb;--up:#5fe08f;--down:#ff7186}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;min-height:100%}
 body{color:var(--ink);font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   background:radial-gradient(1400px 800px at 50% -15%,#4f1833 0%,#24091b 50%,#0d030a 100%) fixed;

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three Card Poker · Cookies Casino</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="cc-core.css?v=3">
+<style>
+.g-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}
+@media (max-width:1050px){.g-grid{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.side .panel{margin:0}
+  #felt{min-height:clamp(420px,calc(100vh - 470px),620px)!important;min-height:clamp(420px,calc(100dvh - 470px),620px)!important}}
+.side .panel{margin-bottom:12px}
+#felt{--cw:clamp(56px,6.4vw,80px);min-height:clamp(430px,calc(100vh - 290px),620px);min-height:clamp(430px,calc(100dvh - 290px),620px);display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px}
+.zone{display:flex;flex-direction:column;align-items:center;gap:6px}
+.zone .cards .card{margin-left:calc(var(--cw)*.1)}.zone .cards .card:first-child{margin-left:0}
+.circles{display:flex;gap:18px;align-items:flex-end;justify-content:center}
+.circ{display:flex;flex-direction:column;align-items:center;gap:4px}
+.circ .spot{width:96px;height:96px}
+.circ .spot.diamond{border-radius:18px;transform:rotate(45deg);width:80px;height:80px}
+.circ .spot.diamond>*{transform:rotate(-45deg)}
+.circ .cap{font-family:Georgia,serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,246,225,.9)}
+.circ .spot.off{opacity:.45;border-style:dotted;cursor:default}
+.tip{font-size:12px;color:#fff3cf;background:rgba(0,0,0,.4);border-radius:10px;padding:4px 10px;min-height:24px}
+.small{font-size:12px;color:#cdb9c2;margin-top:6px}
+#acts .play[hidden],#acts .bet[hidden]{display:none}
+</style>
+</head>
+<body>
+<main class="cc-main">
+  <div class="g-grid">
+    <div class="left"><section class="rail"><div class="felt" id="felt">
+      <div class="zone"><div class="cards" id="dCards"></div><span class="tag" id="dTag" hidden></span></div>
+      <div><div class="felt-print big">Dealer plays with Queen high or better</div><div class="felt-print">Pair Plus pays up to 40 to 1 · Ante bonus up to 5 to 1</div></div>
+      <div class="zone"><div class="cards" id="pCards"></div><span class="tag" id="pTag" hidden></span></div>
+      <div class="circles">
+        <div class="circ"><div class="spot diamond" data-bet="pairplus"><div class="stk"></div></div><span class="cap">Pair Plus</span></div>
+        <div class="circ"><div class="spot" data-bet="ante"><div class="stk"></div></div><span class="cap">Ante</span></div>
+        <div class="circ"><div class="spot off" id="playSpot"><div class="stk"></div></div><span class="cap">Play</span></div>
+      </div>
+      <div class="tip" id="tip"></div>
+    </div></section>
+    <div class="rack" id="rack"><div class="actions" id="acts">
+      <span class="bet"><button class="btn" id="undoBtn">Undo</button> <button class="btn" id="clearBtn">Clear</button></span>
+      <span class="play" hidden><button class="btn" id="foldBtn">Fold</button> <button class="btn pink" id="playBtn">Play</button></span>
+      <button class="btn gold" id="dealBtn">Deal</button>
+    </div></div></div>
+    <aside class="side">
+      <details class="panel" open><summary><h3>Pay tables</h3></summary>
+        <table class="paytable"><tr><th>Pair Plus</th><th class="r">Pays</th></tr><tr><td>Straight Flush</td><td class="r">40:1</td></tr><tr><td>Three of a Kind</td><td class="r">30:1</td></tr>
+          <tr><td>Straight</td><td class="r">6:1</td></tr><tr><td>Flush</td><td class="r">4:1</td></tr><tr><td>Pair</td><td class="r">1:1</td></tr></table>
+        <table class="paytable" style="margin-top:8px"><tr><th>Ante Bonus</th><th class="r">Pays</th></tr><tr><td>Straight Flush</td><td class="r">5:1</td></tr><tr><td>Three of a Kind</td><td class="r">4:1</td></tr><tr><td>Straight</td><td class="r">1:1</td></tr></table></details>
+      <details class="panel"><summary><h3>Rules &amp; house edge</h3></summary><div class="rules"><ul>
+        <li>Make an Ante (and/or Pair Plus), see your 3 cards, then Play (bet = Ante) or Fold</li>
+        <li>Dealer needs Queen-high to qualify. No qualify: Ante pays 1:1, Play pushes</li>
+        <li>Qualifies: higher hand wins Ante and Play 1:1; ties push</li>
+        <li>Ranking: straight flush, trips, straight, flush, pair, high card</li>
+        <li>Ante bonus is paid whenever you play; Pair Plus pays on your hand alone</li>
+        <li>House edge: Ante/Play <b>3.37%</b> per ante (Q-6-4 strategy), Pair Plus <b>2.32%</b></li><li>Limits: Ante $5–$1,000 · Pair Plus $1–$1,000</li></ul></div></details>
+    </aside>
+  </div>
+</main>
+<script src="cc-core.js?v=3"></script>
+<script src="tcp-rules.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+const {$, $$, fmt, Bank, LB, LBUI, UI, Snd, Voice, RNG, LS, cardHTML, stackSVG, wait, Bets} = CC;
+CC.boot({game:'Three Card Poker'});
+Object.assign(Voice.lines, { noq:[["Dealer doesn't qualify."]], fold:[['Fold.']], play:[['Play.']] });
+let phase = 'betting', busy = false, hand = null, stake = null, shown = {}, playAmt = 0;
+const bets = new Bets({limits: TCP.LIMITS, key:'tcp.last', names:{ante:'Ante', pairplus:'Pair Plus'}, onChange: paint});
+const rack = UI.chipRack($('#rack'));
+function paint(){
+  $$('[data-bet]').forEach(s => s.querySelector('.stk').innerHTML = stackSVG(phase === 'betting' ? (bets.get(s.dataset.bet) || shown[s.dataset.bet] || 0) : (stake[s.dataset.bet] || 0)));
+  $('#playSpot .stk').innerHTML = stackSVG(playAmt || (phase === 'betting' ? shown.play || 0 : 0));
+  $('#acts .bet').hidden = phase !== 'betting'; $('#acts .play').hidden = phase !== 'decide'; $('#dealBtn').hidden = phase !== 'betting';
+  const d = $('#dealBtn'); d.disabled = busy || (!bets.total && !bets.canRebet()); d.textContent = !bets.total && bets.canRebet() ? 'Rebet & Deal' : 'Deal';
+  $('#undoBtn').disabled = busy || !bets.log.length; $('#clearBtn').disabled = busy || !bets.total;
+  if (phase === 'decide'){ $('#playBtn').textContent = `Play ${fmt(stake.ante)}`; $('#playBtn').disabled = busy || Bank.value + 1e-9 < stake.ante; $('#foldBtn').disabled = busy; }
+}
+function clearCards(){ if (!hand || phase !== 'betting') return; hand = null; shown = {}; $('#pCards').innerHTML = $('#dCards').innerHTML = ''; $('#pTag').hidden = $('#dTag').hidden = true; $('#tip').textContent = ''; $$('.spot').forEach(s => s.classList.remove('win')); paint(); }
+const catName = cs => TCP.CATS[TCP.category(TCP.score(cs))];
+async function deal(){
+  if (busy || phase !== 'betting') return;
+  clearCards(); if (!bets.total) bets.rebet();
+  if (!bets.total){ UI.flash('Place an Ante (and/or Pair Plus) bet', 'warn'); return; }
+  const bad = bets.invalid(); if (bad){ UI.flash(bad, 'warn'); return; }
+  busy = true; stake = bets.commit(); playAmt = 0; hand = new TCP.Hand(n => RNG.int(n)); phase = 'dealing'; paint();
+  $('#pCards').innerHTML = hand.player.map((c, i) => cardHTML(c, {delay: i * 2 * 220})).join('');
+  $('#dCards').innerHTML = hand.dealer.map((c, i) => cardHTML(null, {down:true, delay: (i * 2 + 1) * 220})).join('');
+  for (let i = 0; i < 6; i++) setTimeout(() => Snd.card(), i * 220);
+  await wait(6 * 220 + 300);
+  $('#pTag').hidden = false; $('#pTag').textContent = catName(hand.player);
+  if (stake.ante){ phase = 'decide'; busy = false;
+    $('#tip').textContent = TCP.shouldPlay(hand.player) ? 'Strategy tip: Q-6-4 or better — Play' : 'Strategy tip: below Q-6-4 — Fold';
+    UI.flash(`You have ${catName(hand.player).toLowerCase()} — Play or Fold?`); paint(); return; }
+  await reveal(false);
+}
+async function decide(play){
+  if (phase !== 'decide' || busy) return;
+  if (play){ if (!Bank.take(stake.ante)){ UI.flash('Not enough chips to Play', 'warn'); return; } playAmt = stake.ante; Snd.chips(2); Voice.line('play'); }
+  else { Voice.line('fold'); }
+  busy = true; phase = 'reveal'; $('#tip').textContent = ''; paint(); await reveal(play);
+}
+async function reveal(played){
+  $('#dCards').innerHTML = hand.dealer.map((c, i) => cardHTML(c, {cls:'flip', delay: i * 180})).join(''); for (let i = 0; i < 3; i++) setTimeout(() => Snd.flip(), i * 180);
+  await wait(800);
+  const s = TCP.settle(stake, hand.player, hand.dealer, played);
+  $('#dTag').hidden = false; $('#dTag').textContent = catName(hand.dealer) + (s.dealerQualifies ? '' : ' · no qualify');
+  Bank.add(s.returned); LB.record(s.wagered, s.returned);
+  const net = s.returned - s.wagered, parts = [];
+  if (s.per.pairplus) parts.push(`Pair Plus ${fmt(s.per.pairplus - stake.pairplus)}`); if (s.per.bonus) parts.push(`Ante bonus ${fmt(s.per.bonus)}`);
+  shown = {}; if (s.per.ante) shown.ante = s.per.ante; if (s.per.pairplus) shown.pairplus = s.per.pairplus; if (s.per.play) shown.play = s.per.play;
+  $$('[data-bet]').forEach(el => el.classList.toggle('win', (s.per[el.dataset.bet] || 0) > (stake[el.dataset.bet] || 0)));
+  $('#playSpot').classList.toggle('win', s.per.play > playAmt && playAmt > 0);
+  const head = ({fold:'Folded', noqualify:"Dealer doesn't qualify — Ante pays, Play pushes", win:'You beat the dealer', push:'Push', lose:'Dealer wins', none:'Pair Plus'})[s.outcome];
+  phase = 'betting'; playAmt = 0; busy = false; paint();
+  if (s.outcome === 'noqualify') Voice.line('noq');
+  if (net > 0){ UI.flash(`${head}${parts.length ? ' · ' + parts.join(' · ') : ''} — you win ${fmt(net)}`, 'win'); Snd.chips(4); Snd.win(net >= s.wagered * 3); if (s.outcome !== 'noqualify') Voice.line(net >= s.wagered * 3 ? 'bigwin' : 'win'); }
+  else if (net === 0) UI.flash(`${head} — even`);
+  else { UI.flash(`${head}${parts.length ? ' · ' + parts.join(' · ') : ''} — ${fmt(-net)} to the house`); Snd.lose(); if (s.outcome === 'lose') Voice.line('lose'); }
+  if (Bank.value < 1){ await wait(1500); Bank.refill(); paint(); }
+}
+$$('[data-bet]').forEach(s => s.addEventListener('click', () => { if (phase !== 'betting' || busy) return; clearCards(); bets.add(s.dataset.bet, rack.value); }));
+$('#undoBtn').onclick = () => bets.undo(); $('#clearBtn').onclick = () => bets.clear(); $('#dealBtn').onclick = deal;
+$('#playBtn').onclick = () => decide(true); $('#foldBtn').onclick = () => decide(false);
+document.addEventListener('keydown', e => { if (LBUI.isOpen || e.metaKey || e.ctrlKey || /input/i.test(e.target.tagName)) return; const k = e.key.toLowerCase();
+  if (k === ' ' || k === 'enter'){ e.preventDefault(); if (phase === 'betting') deal(); } else if (k === 'p') decide(true); else if (k === 'f') decide(false); else if (k === 'backspace'){ e.preventDefault(); bets.undo(); } });
+paint(); UI.flash('Place your Ante — add Pair Plus if you like');
+window.__tcp = { bets, deal, decide, get phase(){ return phase; }, get busy(){ return busy; }, get hand(){ return hand; } };
+})();
+</script>
+</body>
+</html>
