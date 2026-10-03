@@ -154,10 +154,21 @@ details.panel>summary h3{display:flex;justify-content:space-between;margin:0}det
 #lbMe[hidden],#lbForm[hidden]{display:none}
 #lbMe b{color:#fff}
 .lb-list{display:flex;flex-direction:column;gap:4px}
-.lb-row{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.04);font-size:15px}
+#lbModal .sheet{width:min(640px,95vw)}
+.lb-row{display:grid;grid-template-columns:42px minmax(0,1fr) 96px 92px 50px;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.04);font-size:15px}
+.lb-row .pl,.lb-row .pk,.lb-row .sp{text-align:right;font-variant-numeric:tabular-nums}
+.lb-row .pl{font-family:Georgia,serif;font-size:16px;color:#e9dde2}.lb-row .sp{font-size:12.5px;color:#cdb9c2}
+.lb-head{background:none;padding:0 12px 2px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#cdb47a}
+.lb-head span{text-align:right}.lb-head span:nth-child(-n+2){text-align:left}.lb-head .on{color:#fff}
+.up{color:#5fe08f!important}.down{color:#ff7186!important}
+.lb-tabs{display:flex;gap:6px;margin:0 0 10px;padding:4px;border-radius:12px;background:rgba(0,0,0,.3);border:1px solid rgba(216,178,90,.3)}
+.lb-tabs button{flex:1;min-height:38px;border:0;border-radius:9px;background:none;color:#e8cfd9;font:inherit;font-size:13px;letter-spacing:.06em;cursor:pointer}
+.lb-tabs button.on{background:linear-gradient(180deg,#e0508f,#a8245e);color:#fff;box-shadow:inset 0 0 0 1px rgba(243,220,149,.6)}
+#lbPanelInfo .sub{display:block;margin-top:2px;font-size:12px;color:#d9c3cc}
+@media (max-width:560px){.lb-row{grid-template-columns:34px minmax(0,1fr) 82px 74px;font-size:14px}.lb-row .sp{display:none}}
 .lb-row .rk{font-family:Georgia,serif;color:#cdb47a;font-size:14px}.lb-row.top1 .rk,.lb-row.top2 .rk,.lb-row.top3 .rk{font-size:20px}
 .lb-row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
-.lb-row .pk{font-family:Georgia,serif;font-variant-numeric:tabular-nums;color:var(--gold2);font-size:16px}
+.lb-row .pk{font-family:Georgia,serif;color:var(--gold2);font-size:15px}
 .lb-row.me{background:linear-gradient(90deg,rgba(255,105,170,.42),rgba(214,59,125,.18));box-shadow:inset 0 0 0 1.5px #ff86bb}
 .lb-row.me .nm:after{content:"  (you)";color:#ffd1e6;font-size:12px}
 .lb-gap{text-align:center;color:#a98;letter-spacing:.3em}
@@ -215,7 +226,7 @@ details.panel>summary h3{display:flex;justify-content:space-between;margin:0}det
 <div id="tip"></div>
 <div class="modal" id="lbModal" hidden role="dialog" aria-modal="true" aria-labelledby="lbTitle">
   <div class="sheet">
-    <div class="sheet-hd"><h2 id="lbTitle">Leaderboard</h2><p>Biggest bankroll ever reached</p><button class="x" id="lbClose" aria-label="Close">×</button></div>
+    <div class="sheet-hd"><h2 id="lbTitle">Leaderboard</h2><p>Lifetime profit &amp; loss · highest bankroll</p><button class="x" id="lbClose" aria-label="Close">×</button></div>
     <div class="sheet-bd">
       <form id="lbForm" autocomplete="off">
         <div id="lbFormTitle">Choose a nickname to join the leaderboard</div>
@@ -223,7 +234,8 @@ details.panel>summary h3{display:flex;justify-content:space-between;margin:0}det
         <div id="lbErr"></div>
         <div class="lb-form-actions"><button type="button" class="btn" id="lbLater">Maybe later</button><button type="submit" class="btn spin" id="lbJoin" style="padding:10px 22px;font-size:13px">Save</button></div>
       </form>
-      <div id="lbMe" hidden><span>You: <b id="lbMeName"></b> · best <b id="lbMePeak"></b> · <b id="lbMeRank">—</b></span><button type="button" class="btn" id="lbRename" style="min-height:34px;padding:7px 11px">Rename</button></div>
+      <div id="lbMe" hidden><span>You: <b id="lbMeName"></b> · P&amp;L <b id="lbMePnl"></b> · best <b id="lbMePeak"></b> · <b id="lbMeRank">—</b></span><button type="button" class="btn" id="lbRename" style="min-height:34px;padding:7px 11px">Rename</button></div>
+      <div class="lb-tabs" role="tablist"><button type="button" role="tab" data-sort="pnl">Profit &amp; Loss</button><button type="button" role="tab" data-sort="peak">Highest Bankroll</button></div>
       <div class="lb-list" id="lbList"></div>
     </div>
     <div class="sheet-ft" id="lbFoot"></div>
@@ -239,6 +251,8 @@ function el(tag, attrs, parent){ const e = document.createElementNS(SVGNS, tag);
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const fmt = n => '$' + Math.round(n).toLocaleString('en-US');
+const fmtPnl = n => (n > 0 ? '+' : n < 0 ? '-' : '') + fmt(Math.abs(n));      // +$1,250 / -$300
+const pnlCls = n => n > 0 ? 'up' : n < 0 ? 'down' : '';
 const fmtShort = n => n < 1000 ? '$' + n : '$' + (n/1000).toFixed(1).replace(/\.0$/,'') + 'K';
 const mod = (a,n) => ((a % n) + n) % n;
 const ease = { inOut: u => u<.5 ? 4*u*u*u : 1 - Math.pow(-2*u+2,3)/2, out: u => 1 - Math.pow(1-u,3), in: u => u*u*u,
@@ -278,6 +292,11 @@ const COOKIE = {   // cookie chips: dough type + icing-ring colour identify the 
 /* ---------------- State ---------------- */
 let type = LS.get('type','american'); if (!ORDER[type]) type = 'american';
 const START_BANK = 300;
+const LB_SEASON = 2;   // leaderboard season: bumping it wipes the local identity/stats and resets the bankroll once (server board was reset too)
+if ((+LS.get('lb.season', 0) || 0) < LB_SEASON){
+  ['id','secret','nick','peak','spins','sentPeak','sentSpins','rank','rankPeak','asked','net','wagered'].forEach(k => { try { localStorage.removeItem('cc.lb.' + k); } catch(e){} });
+  LS.set('bankroll', START_BANK); LS.set('lb.season', LB_SEASON);
+}
 let bankroll = +LS.get('bankroll', START_BANK); if (!isFinite(bankroll) || bankroll < 1) bankroll = START_BANK;
 let spinHistory = LS.get('history', []); if (!Array.isArray(spinHistory)) spinHistory = [];
 let chipValue = LS.get('chip', 5); if (!DENOMS.includes(chipValue)) chipValue = 5;
@@ -953,7 +972,7 @@ async function resolveRound(n){
   else if (wagered > 0){ mw.textContent = '$0'; mw.className = 'v'; flash(`${name}${colName} — house wins · place your bets`, 'info'); }
   else flash(`${name}${colName} — place your bets`, 'info');
   updateMeters(); saveBank(); updateButtons();
-  LB.afterSpin();
+  LB.afterSpin(wagered, ret);
   if (bankroll < 1){ await wait(1800); bankroll = START_BANK; updateMeters(); saveBank(); Snd.chips(5); flash('Out of chips — here\'s a fresh $300 on the house 🍪', 'win'); Voice.line('refill'); updateButtons(); }
 }
 /* ================= UI: meters, board, buttons, placard ================= */
@@ -1023,7 +1042,7 @@ function wireButtons(){
     if (need > bankroll){ flash(`Rebet needs ${fmt(need)} — bankroll is ${fmt(bankroll)}`, 'warn'); return; }
     const op = []; for (const [id, amt] of lastBets){ if (!SPOTMAP[id]) continue; const a = placeBet(id, amt, {record:false, silent:true}); if (a) op.push({id, amt:a}); }
     undoStack.push(op); Snd.chips(3); flash(`Rebet — ${fmt(tableTotal())} on the table`); updateButtons(); };
-  $('#buyBtn').onclick = () => { if (phase !== 'betting') return; if (!confirm('Reset your bankroll to $300? Chips on the table are returned first. Your best bankroll on the leaderboard is kept.')) return;
+  $('#buyBtn').onclick = () => { if (phase !== 'betting') return; if (!confirm('Reset your bankroll to $300? Chips on the table are returned first. Your leaderboard P&L and highest bankroll are kept.')) return;
     for (const [id, amt] of [...bets]) removeBet(id, amt); undoStack = []; bankroll = START_BANK; shownBank = 0; updateMeters(); saveBank(); Snd.chips(5); flash('Buy-in: $300 in chips'); updateButtons(); };
   document.querySelectorAll('#typeSeg button').forEach(b => b.onclick = () => { if (phase !== 'betting' || bets.size || b.dataset.type === type) return;
     type = b.dataset.type; LS.set('type', type); clearResultMarkers(); lastBets = new Map(); undoStack = [];
@@ -1052,14 +1071,16 @@ function wireButtons(){
   ['touchend','click','keydown'].forEach(t => document.addEventListener(t, unlock, {capture:true, passive:true}));
 }
 
-/* ================= ONLINE LEADERBOARD — peak bankroll (Supabase RPC via plain fetch) ================= */
+/* ================= ONLINE LEADERBOARD — lifetime P&L + highest bankroll (Supabase RPC via plain fetch) ================= */
 const LB = {
   url: 'https://goohcqtscqojwofeopxo.supabase.co/rest/v1',
-  key: 'sb_publishable_3wJJwbmnlKE1X4EPSvKuNg_UHYlYssc',                                   // public publishable key — table is RLS-locked, writes only via submit_score()
+  key: 'sb_publishable_3wJJwbmnlKE1X4EPSvKuNg_UHYlYssc',                                   // public publishable key — table is RLS-locked, writes only via submit_stats()
   id: LS.get('lb.id', null), secret: LS.get('lb.secret', null), nick: LS.get('lb.nick', null),
-  peak: +LS.get('lb.peak', 0) || 0, spins: +LS.get('lb.spins', 0) || 0, sentPeak: +LS.get('lb.sentPeak', 0) || 0,
-  rank: LS.get('lb.rank', null), timer: null, busy: false, retry: 0,
-  save(){ ['id','secret','nick','peak','spins','sentPeak','rank'].forEach(k => LS.set('lb.' + k, this[k])); },
+  net: +LS.get('lb.net', 0) || 0, wagered: +LS.get('lb.wagered', 0) || 0, spins: +LS.get('lb.spins', 0) || 0,   // lifetime (this season)
+  peak: +LS.get('lb.peak', START_BANK) || START_BANK, sentSpins: +LS.get('lb.sentSpins', -1), sentPeak: +LS.get('lb.sentPeak', 0) || 0,
+  rank: LS.get('lb.rank', null), rankPeak: LS.get('lb.rankPeak', null), sort: LS.get('lb.sort', 'pnl') === 'peak' ? 'peak' : 'pnl',
+  timer: null, busy: false, retry: 0,
+  save(){ ['id','secret','nick','net','wagered','spins','peak','sentSpins','sentPeak','rank','rankPeak'].forEach(k => LS.set('lb.' + k, this[k])); },
   ensureId(){
     if (this.id && this.secret) return;
     const b = new Uint8Array(32); crypto.getRandomValues(b);
@@ -1078,27 +1099,34 @@ const LB = {
   },
   cleanNick(s){ return String(s || '').replace(/[^A-Za-z0-9 _.!?'~*-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16); },
   notePeak(){ const b = Math.floor(bankroll); if (b > this.peak){ this.peak = b; this.save(); } renderLBPanel(); },
-  afterSpin(){ this.spins++; this.notePeak(); this.schedule(); },
-  schedule(delay = 1500){ if (!this.nick || this.peak <= this.sentPeak) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.submit(), delay); },
+  afterSpin(wagered = 0, ret = 0){                               // called once per resolved spin; Buy-in/refill never touch these
+    this.spins++; this.wagered += wagered; this.net += ret - wagered; this.save(); this.notePeak(); this.schedule(); },
+  schedule(delay = 1500){ if (!this.nick || (this.spins <= this.sentSpins && this.peak <= this.sentPeak)) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.submit(), delay); },
   async submit(nick){
     if (this.busy){ this.schedule(2500); return {ok:false, error:'busy'}; }
     this.ensureId(); const useNick = nick || this.nick; if (!useNick) return {ok:false, error:'no_nick'};
     this.busy = true;
     try {
-      const res = await this.rpc('submit_score', {p_player_id:this.id, p_secret:this.secret, p_nickname:useNick, p_peak:Math.floor(this.peak), p_spins:this.spins});
-      if (res && res.ok){ this.nick = res.nickname; this.sentPeak = Math.max(this.sentPeak, +res.peak || 0); this.rank = res.rank; this.retry = 0; this.save(); renderLBPanel(); }
+      const res = await this.rpc('submit_stats', {p_player_id:this.id, p_secret:this.secret, p_nickname:useNick,
+        p_net:Math.round(this.net), p_wagered:Math.round(this.wagered), p_spins:this.spins, p_peak:Math.floor(this.peak)});
+      if (res && res.ok){ this.nick = res.nickname; this.sentSpins = +res.spins; this.sentPeak = Math.max(this.sentPeak, +res.peak || 0);
+        this.rank = res.rank; this.rankPeak = res.rank_peak; this.retry = 0; this.save(); renderLBPanel(); }
+      else if (res && res.error === 'stale' && +res.spins > this.spins){   // another tab/device with this identity is ahead: adopt the server's totals
+        this.spins = this.sentSpins = +res.spins; this.wagered = +res.wagered; this.net = +res.net; this.peak = Math.max(this.peak, +res.peak || 0);
+        this.save(); renderLBPanel(); }
       else if (res && res.error === 'rate_limited' && this.retry++ < 3){ this.busy = false; await wait(3300); return this.submit(nick); }
       return res || {ok:false, error:'no_response'};
     } catch(e){ return {ok:false, error:'offline'}; }          // fail silently offline; we retry after the next spin
     finally { this.busy = false; }
   },
-  async board(){ return this.rpc('get_leaderboard', {p_player_id: this.id || null}); }
+  async board(){ return this.rpc('get_leaderboard', {p_player_id: this.id || null, p_sort: this.sort}); }
 };
 function renderLBPanel(){
   const p = document.getElementById('lbPanelInfo'); if (!p) return;
+  const pl = `<b class="${pnlCls(LB.net)}">${fmtPnl(LB.net)}</b>`, sub = `<span class="sub">Highest bankroll ${fmt(LB.peak)}</span>`;
   p.innerHTML = LB.nick
-    ? `<b></b> · best <b>${fmt(LB.peak)}</b>${LB.rank ? ` · rank <b>#${LB.rank}</b>` : ''}`
-    : `Your best: <b>${fmt(LB.peak)}</b> · tap to join`;
+    ? `<b></b> · P&amp;L ${pl}${LB.rank ? ` · rank <b>#${LB.rank}</b>` : ''}${sub}`
+    : `Your P&amp;L: ${pl} · tap to join${sub}`;
   if (LB.nick) p.querySelector('b').textContent = LB.nick;
 }
 const LBUI = {
@@ -1112,7 +1140,7 @@ const LBUI = {
     $('#lbFormTitle').textContent = LB.nick ? 'Change your nickname' : 'Choose a nickname to join the leaderboard';
     $('#lbLater').textContent = LB.nick ? 'Cancel' : 'Maybe later';
     if (on){ const i = $('#lbNick'); i.value = LB.nick || ''; setTimeout(() => { try { i.focus(); } catch(e){} }, 60); }
-    if (LB.nick){ $('#lbMeName').textContent = LB.nick; $('#lbMePeak').textContent = fmt(LB.peak); }
+    if (LB.nick){ $('#lbMeName').textContent = LB.nick; const pe = $('#lbMePnl'); pe.textContent = fmtPnl(LB.net); pe.className = pnlCls(LB.net); $('#lbMePeak').textContent = fmt(LB.peak); }
   },
   async join(){
     const raw = $('#lbNick').value, nick = LB.cleanNick(raw), err = $('#lbErr'), btn = $('#lbJoin');
@@ -1125,17 +1153,24 @@ const LBUI = {
       offline:'Can’t reach the leaderboard right now — check your connection and try again.', rate_limited:'Too fast — try again in a few seconds.'})[res.error] || 'Couldn’t save — please try again.';
   },
   async refresh(){
-    const list = $('#lbList'), foot = $('#lbFoot'); foot.textContent = 'Loading…';
+    const list = $('#lbList'), foot = $('#lbFoot'), sort = LB.sort; foot.textContent = 'Loading…';
+    document.querySelectorAll('.lb-tabs button').forEach(b => { const on = b.dataset.sort === sort; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+    if (LB.nick){ const pe = $('#lbMePnl'); pe.textContent = fmtPnl(LB.net); pe.className = pnlCls(LB.net); $('#lbMePeak').textContent = fmt(LB.peak); }
     try {
-      const d = await LB.board(); list.innerHTML = '';
+      const d = await LB.board(); if (sort !== LB.sort) return;      // tab switched while loading
+      list.innerHTML = '';
       const row = (r, me) => { const el = document.createElement('div'); el.className = 'lb-row' + (me ? ' me' : '') + (r.rank <= 3 ? ' top' + r.rank : '');
-        el.innerHTML = '<span class="rk"></span><span class="nm"></span><span class="pk"></span>';
-        el.children[0].textContent = r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : '#' + r.rank; el.children[1].textContent = r.nickname; el.children[2].textContent = fmt(r.peak); return el; };
+        el.innerHTML = '<span class="rk"></span><span class="nm"></span><span class="pl"></span><span class="pk"></span><span class="sp"></span>';
+        const c = el.children; c[0].textContent = r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : '#' + r.rank; c[1].textContent = r.nickname;
+        c[2].textContent = fmtPnl(+r.net); if (pnlCls(+r.net)) c[2].classList.add(pnlCls(+r.net)); c[3].textContent = fmt(+r.peak);
+        c[4].textContent = (+r.spins).toLocaleString('en-US'); el.title = `${r.nickname}: P&L ${fmtPnl(+r.net)} · highest bankroll ${fmt(+r.peak)} · ${r.spins} spins`; return el; };
+      if ((d.top || []).length){ const h = document.createElement('div'); h.className = 'lb-row lb-head';
+        h.innerHTML = `<span>#</span><span>Player</span><span class="${sort === 'pnl' ? 'on' : ''}">P&amp;L</span><span class="${sort === 'peak' ? 'on' : ''}">Highest</span><span>Spins</span>`; list.appendChild(h); }
       (d.top || []).forEach(r => list.appendChild(row(r, r.me)));
       if (d.me && !(d.top || []).some(r => r.me)){ const gap = document.createElement('div'); gap.className = 'lb-gap'; gap.textContent = '···'; list.appendChild(gap); list.appendChild(row(d.me, true)); }
       if (!(d.top || []).length) list.innerHTML = '<div class="lb-empty">No scores yet — be the first cookie on the board!</div>';
-      if (d.me){ LB.rank = d.me.rank; LB.save(); renderLBPanel(); $('#lbMeRank').textContent = '#' + d.me.rank; }
-      foot.textContent = `${d.total} player${d.total === 1 ? '' : 's'} · ranked by biggest bankroll ever reached · updated ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+      if (d.me){ if (sort === 'peak') LB.rankPeak = d.me.rank; else LB.rank = d.me.rank; LB.save(); renderLBPanel(); $('#lbMeRank').textContent = '#' + d.me.rank; }
+      foot.textContent = `${d.total} player${d.total === 1 ? '' : 's'} · ranked by ${sort === 'peak' ? 'highest bankroll ever reached' : 'lifetime profit & loss'} · updated ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
       const meEl = list.querySelector('.me'); if (meEl && meEl.scrollIntoView) meEl.scrollIntoView({block:'nearest'});
     } catch(e){ foot.textContent = 'Leaderboard unavailable — you may be offline.'; }
   },
@@ -1145,6 +1180,7 @@ const LBUI = {
     $('#lbModal').addEventListener('click', e => { if (e.target.id === 'lbModal') this.close(); });
     $('#lbLater').onclick = () => { if (LB.nick) this.showForm(false); else this.close(); };
     $('#lbRename').onclick = () => this.showForm(true);
+    document.querySelectorAll('.lb-tabs button').forEach(b => b.onclick = () => { if (LB.sort === b.dataset.sort) return; LB.sort = b.dataset.sort; LS.set('lb.sort', LB.sort); this.refresh(); });
     $('#lbForm').addEventListener('submit', e => { e.preventDefault(); this.join(); });
     $('#lbNick').addEventListener('input', e => { const c = e.target.value.replace(/[^A-Za-z0-9 _.!?'~*-]/g, ''); if (c !== e.target.value) e.target.value = c; });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#lbModal').hidden) this.close(); });
