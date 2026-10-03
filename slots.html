@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cookie Slots · Cookies Casino</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="cc-core.css?v=3">
+<style>
+.sl{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;max-width:1200px;margin:0 auto}
+@media (max-width:1000px){.sl{grid-template-columns:1fr}}
+.cab{border-radius:30px;padding:16px;background:linear-gradient(135deg,#4a210c,#86441f 22%,#5a2810 45%,#8a4822 70%,#4a210c);box-shadow:0 22px 44px rgba(0,0,0,.65),inset 0 2px 0 rgba(255,255,255,.18)}
+.marquee{text-align:center;font-family:Didot,"Bodoni 72",Georgia,serif;letter-spacing:.3em;text-transform:uppercase;color:#fff3d0;font-size:clamp(16px,2vw,22px);padding:6px 0 12px;text-shadow:0 0 12px rgba(255,134,187,.8)}
+.glass{position:relative;border-radius:20px;padding:14px 46px;background:radial-gradient(ellipse at 50% 30%,#f0649f,#b0245f 70%,#7f1244);box-shadow:inset 0 0 40px rgba(0,0,0,.6)}
+.reels{--sh:clamp(78px,min(11vw,13.5vh),130px);--sh:clamp(78px,min(11vw,13.5dvh),130px);display:grid;grid-template-columns:repeat(3,1fr);gap:12px;position:relative}
+.reel{height:calc(var(--sh)*3);overflow:hidden;border-radius:14px;background:linear-gradient(180deg,#e8dccb,#fffaf2 18%,#fffaf2 82%,#e8dccb);box-shadow:inset 0 10px 18px rgba(0,0,0,.35),inset 0 -10px 18px rgba(0,0,0,.35),0 0 0 3px #f3dc95}
+.col{will-change:transform}
+.sym{height:var(--sh);display:grid;place-items:center;font-size:calc(var(--sh)*.62);position:relative}
+.sym.gold{background:radial-gradient(circle,rgba(255,215,90,.75),rgba(255,215,90,0) 65%)}
+.sym.gold:after{content:"✨";position:absolute;right:12%;top:8%;font-size:calc(var(--sh)*.28)}
+.sym.blank:before{content:"";width:30%;height:4px;border-radius:2px;background:rgba(160,110,80,.25)}
+.col.blur .sym{filter:blur(2px)}
+.sym.hit{animation:symhit .6s ease-in-out infinite alternate}
+@keyframes symhit{from{transform:scale(1);filter:drop-shadow(0 0 0 #fff)}to{transform:scale(1.12);filter:drop-shadow(0 0 12px #fff6c0)}}
+svg.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+svg.lines polyline{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;opacity:.92;filter:drop-shadow(0 0 4px rgba(0,0,0,.6))}
+.lnum{position:absolute;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;border:2px solid #fff3d0;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.lnum.on{animation:symhit .5s infinite alternate}
+.meterrow{display:flex;justify-content:space-around;gap:10px;margin-top:12px;font-family:"Arial Rounded MT Bold",Arial,sans-serif;color:#ffe9a8;text-transform:uppercase;letter-spacing:.08em;font-size:13px}
+.meterrow b{display:block;color:#fff;font-size:22px;font-family:Georgia,serif;letter-spacing:0;text-align:center}
+.seg{display:flex;border:1px solid rgba(216,178,90,.5);border-radius:10px;overflow:hidden}
+.seg button{background:transparent;color:#cdb47a;border:0;padding:10px 12px;font-size:13px;cursor:pointer;min-height:44px}
+.seg button.on{background:linear-gradient(#e9c56e,#a8792a);color:#1b1206;font-weight:700}
+.seg button:disabled{opacity:.5}
+.lbl{font-size:10px;letter-spacing:.25em;color:#cdb47a;text-transform:uppercase;margin-right:6px}
+.ptab td:first-child{font-size:20px;white-space:nowrap}
+.side .panel{margin-bottom:12px}
+.small{font-size:12px;color:#cdb9c2;margin-top:6px;line-height:1.5}
+</style>
+</head>
+<body>
+<main class="cc-main">
+  <div class="sl">
+    <div>
+      <div class="cab"><div class="marquee">🍪 Cookie Jar Jackpot 🍪</div>
+        <div class="glass" id="glass"><div class="reels" id="reels"></div><svg class="lines" id="lines"></svg></div>
+        <div class="meterrow"><span>Lines<b>5</b></span><span>Line bet<b id="lbTxt"></b></span><span>Total bet<b id="tbTxt"></b></span><span>Win<b id="winTxt">$0</b></span></div>
+      </div>
+      <div class="rack"><div><span class="lbl">Line bet</span><div class="seg" id="bets"></div></div>
+        <div class="actions"><button class="btn gold" id="spinBtn">Spin</button></div></div>
+    </div>
+    <aside class="side">
+      <div class="panel"><h3>Pays (× line bet)</h3><table class="paytable ptab" id="ptab"></table><div class="small">Cherries count anywhere on a line. Every line pays separately; wins on several lines add up.</div></div>
+      <details class="panel" open><summary><h3>Return to player</h3></summary><div class="rules" id="rtpBox">Computing…</div></details>
+    </aside>
+  </div>
+</main>
+<script src="cc-core.js?v=3"></script>
+<script src="slots-rules.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+const {$, $$, fmt, Bank, LB, LBUI, UI, Snd, Voice, RNG, LS, wait} = CC;
+CC.boot({game:'Cookie Slots'});
+Object.assign(Voice.lines, { jackpot:[['Jackpot!', 'Golden cookies!']] });
+const COLORS = ['#ffe066','#7fd1ff','#9dff9d','#ff9bd2','#ffb36b'];
+let bet = LS.get('slots.bet', 1); if (!SLOTS.BETS.includes(bet)) bet = 1;
+let busy = false, stops = LS.get('slots.stops', null); if (!Array.isArray(stops) || stops.length !== 3) stops = [7, 16, 24];
+const symHTML = k => `<div class="sym ${k}">${SLOTS.SYM[k].e}</div>`;
+function build(){
+  $('#reels').innerHTML = [0, 1, 2].map(r => `<div class="reel"><div class="col" id="col${r}"></div></div>`).join('');
+  showStops(stops);
+  const g = $('#glass');
+  SLOTS.LINES.forEach((ln, i) => { [0, 1].forEach(side => { const d = document.createElement('div'); d.className = 'lnum'; d.dataset.line = i; d.textContent = i + 1; d.style.background = COLORS[i]; d.style.color = '#2a0614';
+    d.style[side ? 'right' : 'left'] = '8px'; d.style.top = `calc(14px + var(--sh) * ${(side ? ln[2] : ln[0]) + .5} - 15px)`; g.appendChild(d); }); });
+  g.style.setProperty('--sh', getComputedStyle($('#reels')).getPropertyValue('--sh'));
+}
+function showStops(s){ const w = SLOTS.windowAt(s); [0, 1, 2].forEach(r => { const c = $('#col' + r); c.style.transition = 'none'; c.style.transform = 'none'; c.classList.remove('blur'); c.innerHTML = w[r].map(symHTML).join(''); }); }
+function info(){ $('#lbTxt').textContent = fmt(bet); $('#tbTxt').textContent = fmt(bet * 5);
+  $('#bets').innerHTML = SLOTS.BETS.map(b => `<button data-b="${b}" class="${b === bet ? 'on' : ''}" ${busy ? 'disabled' : ''}>${fmt(b)}</button>`).join('');
+  $$('#bets button').forEach(x => x.onclick = () => { bet = +x.dataset.b; LS.set('slots.bet', bet); Snd.click(); info(); });
+  $('#spinBtn').disabled = busy; }
+function drawLines(wins){
+  const svg = $('#lines'), box = $('#glass').getBoundingClientRect(), reels = $$('.reel').map(r => r.getBoundingClientRect());
+  svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+  svg.innerHTML = wins.map(w => { const pts = SLOTS.LINES[w.line].map((row, r) => { const rb = reels[r]; return `${(rb.left - box.left + rb.width / 2).toFixed(1)},${(rb.top - box.top + rb.height * (row + .5) / 3).toFixed(1)}`; });
+    return `<polyline points="${pts.join(' ')}" stroke="${COLORS[w.line]}"/>`; }).join('');
+  $$('.lnum').forEach(n => n.classList.toggle('on', wins.some(w => w.line === +n.dataset.line)));
+}
+function clearWin(){ $('#lines').innerHTML = ''; $$('.lnum').forEach(n => n.classList.remove('on')); $$('.sym.hit').forEach(s => s.classList.remove('hit')); }
+async function spin(){
+  if (busy) return;
+  const total = bet * 5;
+  if (total > Bank.value + 1e-9){ if (Bank.value < 5){ Bank.refill(); return; } UI.flash('Not enough chips — lower the line bet', 'warn'); return; }
+  busy = true; info(); clearWin(); Bank.take(total); Snd.chips(2); $('#winTxt').textContent = '$0'; UI.flash('Good luck!');
+  const next = SLOTS.spin(n => RNG.int(n)), res = SLOTS.evaluate(next), w = res.window, sh = $$('.sym')[0].getBoundingClientRect().height;
+  const durs = [1100, 1550, 2000];
+  await Promise.all([0, 1, 2].map(r => new Promise(done => {
+    const col = $('#col' + r), cur = SLOTS.windowAt(stops)[r], filler = [];
+    const n = 18 + r * 7; for (let i = 0; i < n; i++) filler.push(SLOTS.STRIPS[r][RNG.int(SLOTS.L)]);
+    col.innerHTML = [...w[r], ...filler, ...cur].map(symHTML).join('');      // final window on top; we scroll down to it
+    col.style.transition = 'none'; col.style.transform = `translateY(${-(n + 3) * sh}px)`; col.classList.add('blur'); void col.offsetHeight;
+    col.style.transition = `transform ${durs[r]}ms cubic-bezier(.15,.6,.25,1.04)`; col.style.transform = 'translateY(0)';
+    const tick = setInterval(() => Snd.reel(), 70);
+    setTimeout(() => col.classList.remove('blur'), durs[r] - 260);
+    setTimeout(() => { clearInterval(tick); Snd.stop(); done(); }, durs[r]);
+  })));
+  stops = next; LS.set('slots.stops', stops); showStops(stops);
+  const won = res.mult * bet;
+  Bank.add(won); LB.record(total, won);
+  if (res.wins.length){
+    drawLines(res.wins);
+    res.wins.forEach(x => SLOTS.LINES[x.line].forEach((row, r) => { if (res.mult && (x.mult > 1 || x.syms[r] === 'cherry')) $('#col' + r).children[row].classList.add('hit'); }));
+    $('#winTxt').textContent = fmt(won);
+    const top = res.wins.reduce((a, x) => x.mult > a.mult ? x : a);
+    const desc = res.wins.length > 1 ? `${res.wins.length} lines` : `Line ${top.line + 1}`;
+    if (top.mult >= 1000){ UI.flash(`JACKPOT! Golden cookies — you win ${fmt(won)}`, 'win'); Snd.win(true); Snd.chips(8); Voice.line('jackpot'); }
+    else if (won > total){ UI.flash(`${desc} — you win ${fmt(won)}`, 'win'); Snd.win(won >= total * 10); Snd.chips(Math.min(6, 2 + Math.floor(Math.log10(won)))); if (won >= total * 10) Voice.line('bigwin'); }
+    else UI.flash(`${desc} — ${fmt(won)} back`);
+  } else UI.flash('No win — spin again');
+  busy = false; info();
+  if (Bank.value < 5){ await wait(1500); Bank.refill(); }
+}
+// pay table + exact RTP
+$('#ptab').innerHTML = '<tr><th>Line</th><th class="r">Pays</th></tr>' + ['gold','cake','donut','choc','candy','cherry'].map(k => `<tr><td>${SLOTS.SYM[k].e.repeat(3)}</td><td class="r">${SLOTS.PAY3[k].toLocaleString('en-US')}×</td></tr>`).join('')
+  + `<tr><td>🧁🍩🍬 <small>any 3 sweets</small></td><td class="r">5×</td></tr><tr><td>🍒🍒 <small>any 2</small></td><td class="r">4×</td></tr><tr><td>🍒 <small>any 1</small></td><td class="r">1×</td></tr>`;
+setTimeout(() => { const x = SLOTS.exactRTP();
+  $('#rtpBox').innerHTML = `<b style="font-size:20px;color:#fff">${(x.rtp * 100).toFixed(2)}%</b> return to player (house edge ${((1 - x.rtp) * 100).toFixed(2)}%).
+    <div class="small">Computed exactly in your browser from the reel strips this machine uses: all ${x.combos.toLocaleString('en-US')} stop combinations × 5 lines.
+    3 reels × 32 stops, each stop chosen with your device's crypto RNG. Something wins on ${(x.hitRate * 100).toFixed(1)}% of spins (often a 1× cherry refund). Top prize: ${x.maxMult.toLocaleString('en-US')}× line bet.</div>`; }, 50);
+$('#spinBtn').onclick = spin;
+document.addEventListener('keydown', e => { if (LBUI.isOpen || e.metaKey || e.ctrlKey || /input/i.test(e.target.tagName)) return; if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); spin(); } });
+build(); info(); UI.flash('Pick a line bet and Spin');
+window.addEventListener('resize', () => clearWin());
+window.__sl = { spin, get busy(){ return busy; }, get stops(){ return stops; } };
+})();
+</script>
+</body>
+</html>
