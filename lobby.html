@@ -52,7 +52,7 @@ const GAMES = [
   {href:'slots.html', name:'Cookie Slots', art:'🎰', tag:'3 reels · 5 lines', desc:'Line up cookies, cupcakes and golden cookies for up to 1,000× your line bet.', edge:'', ready:false},
   {href:'craps.html', name:'Craps', art:'🎲', tag:'Pass · odds · props', desc:'Pass and don\'t pass, come bets, free odds, place bets, field, hardways and one-roll props.', edge:'', ready:false},
   {href:'baccarat.html', name:'Baccarat', art:'👑', tag:'8 decks · punto banco', desc:'Player, Banker or Tie, plus Player and Banker pair side bets.', edge:'Edge 1.06% Banker · 1.24% Player', ready:true},
-  {href:'videopoker.html', name:'Video Poker', art:'🂡', tag:'9/6 Jacks or Better', desc:'Full-pay Jacks or Better. Hold, draw and chase the 4,000-coin royal flush.', edge:'', ready:false},
+  {href:'videopoker.html', name:'Video Poker', art:'🂡', tag:'9/6 Jacks or Better', desc:'Full-pay Jacks or Better. Hold, draw and chase the 4,000-coin royal flush.', edge:'Return 99.54% with perfect play', ready:true},
   {href:'threecard.html', name:'Three Card Poker', art:'♠️', tag:'Ante · Play · Pair Plus', desc:'Beat the dealer\'s three cards. Ante bonus and Pair Plus up to 40 to 1.', edge:'', ready:false}
 ];
 $('#games').innerHTML = GAMES.map(g => `<a class="game ${g.ready ? '' : 'soon'}" href="${g.href}"><div class="art">${g.art}<small>${g.tag}</small></div>

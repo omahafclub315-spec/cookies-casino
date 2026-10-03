@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Poker · Cookies Casino</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="cc-core.css?v=2">
+<style>
+.vp{max-width:980px;margin:0 auto}
+.cabinet{border-radius:28px;padding:14px;background:linear-gradient(135deg,#4a210c,#86441f 22%,#5a2810 45%,#8a4822 70%,#4a210c);box-shadow:0 22px 44px rgba(0,0,0,.65),inset 0 2px 0 rgba(255,255,255,.18)}
+.screen{border-radius:18px;padding:14px;background:radial-gradient(ellipse at 50% 30%,#3a0f2a,#14040e 75%);box-shadow:inset 0 0 40px rgba(0,0,0,.8),inset 0 0 0 2px rgba(243,220,149,.35)}
+.pt{width:100%;border-collapse:collapse;font-family:"Arial Rounded MT Bold","Helvetica Neue",Arial,sans-serif;font-size:clamp(12px,1.5vw,15px);color:#ffe9a8;text-transform:uppercase;letter-spacing:.04em}
+.pt td{padding:2px 8px;border-right:1px solid rgba(243,220,149,.25);text-align:right;font-variant-numeric:tabular-nums}
+.pt td:first-child{text-align:left;color:#ffd1e6}
+.pt td:last-child{border-right:0}
+.pt td.col{background:rgba(214,59,125,.35);color:#fff}
+.pt tr.hit td{background:#ff86bb;color:#2a0614;animation:blink .5s steps(2) infinite}
+@keyframes blink{50%{background:#fff3c0}}
+.screen{padding:12px 14px}
+.vcards{--cw:clamp(66px,min(12.5vw,14.5vh),142px);--cw:clamp(66px,min(12.5vw,14.5dvh),142px);display:flex;justify-content:center;gap:clamp(8px,1.6vw,18px);margin:16px 0 6px}
+.slot{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;touch-action:manipulation}
+.slot .card{margin:0}
+.slot .held-lbl{height:22px;font-family:Georgia,serif;letter-spacing:.25em;font-size:14px;color:#ffe08a;text-shadow:0 0 10px rgba(255,224,138,.8);visibility:hidden}
+.slot.held .held-lbl{visibility:visible}
+.slot .hbtn{min-height:40px;width:var(--cw);padding:6px}
+.vinfo{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-family:"Arial Rounded MT Bold",Arial,sans-serif;color:#ffe9a8;letter-spacing:.06em;text-transform:uppercase;font-size:14px}
+.vinfo b{color:#fff;font-size:18px}
+#handName{min-height:30px;text-align:center;font-family:Georgia,serif;letter-spacing:.2em;text-transform:uppercase;color:#fff;font-size:clamp(16px,2vw,22px);text-shadow:0 0 14px rgba(255,134,187,.8)}
+.panel-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:12px}
+.seg{display:flex;border:1px solid rgba(216,178,90,.5);border-radius:10px;overflow:hidden}
+.seg button{background:transparent;color:#cdb47a;border:0;padding:10px 14px;font-size:13px;letter-spacing:.06em;cursor:pointer;min-height:44px}
+.seg button.on{background:linear-gradient(#e9c56e,#a8792a);color:#1b1206;font-weight:700}
+.seg button:disabled{opacity:.5}
+.lbl{font-size:10px;letter-spacing:.25em;color:#cdb47a;text-transform:uppercase;margin-right:6px}
+.info{margin-top:14px}
+</style>
+</head>
+<body>
+<main class="cc-main vp">
+  <div class="cabinet"><div class="screen">
+    <table class="pt" id="pt"></table>
+    <div class="vcards" id="vcards"></div>
+    <div id="handName"></div>
+    <div class="vinfo"><span>Bet <b id="betTxt"></b></span><span>Win <b id="winTxt">$0</b></span><span>Coin <b id="coinTxt"></b></span></div>
+  </div></div>
+  <div class="rack">
+    <div><span class="lbl">Coin</span><div class="seg" id="denoms"></div></div>
+    <div class="actions">
+      <button class="btn" id="oneBtn">Bet One</button><button class="btn pink" id="maxBtn">Bet Max</button><button class="btn gold" id="dealBtn">Deal</button>
+    </div>
+  </div>
+  <details class="panel info"><summary><h3>Rules &amp; return</h3></summary><div class="rules"><ul>
+    <li>9/6 "full pay" Jacks or Better · one fresh 52-card deck every hand</li><li>Bet 1–5 coins ($1, $5 or $25 coins); a 5-coin Royal Flush pays 4,000 coins</li>
+    <li>Tap a card (or its HOLD button, or keys 1–5) to hold it, then Draw</li>
+    <li>Return with perfect strategy: <b>99.54%</b> (house edge 0.46%). Pays shown are coins returned for coins bet.</li></ul></div></details>
+</main>
+<script src="cc-core.js?v=2"></script>
+<script src="vp-rules.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+const {$, $$, fmt, Bank, LB, LBUI, UI, Snd, Voice, RNG, LS, cardHTML, wait} = CC;
+CC.boot({game:'Video Poker'});
+Object.assign(Voice.lines, { royal:[['Royal flush!', 'Sugoi!']], sf:[['Straight flush!']], quads:[['Four of a kind!']], fh:[['Full house!']], flush:[['Flush!']], straight:[['Straight!']], trips:[['Three of a kind.']], twopair:[['Two pair.']], jacks:[['Jacks or better.']] });
+const DENOMS = [1, 5, 25];
+let denom = LS.get('vp.denom', 1); if (!DENOMS.includes(denom)) denom = 1;
+let coins = LS.get('vp.coins', 5); if (!(coins >= 1 && coins <= 5)) coins = 5;
+let hand = null, phase = 'idle', busy = false, lastCat = null;
+function table(){
+  $('#pt').innerHTML = VP.ORDER.map(k => `<tr data-k="${k}" class="${lastCat === k ? 'hit' : ''}"><td>${VP.NAMES[k]}</td>${[1,2,3,4,5].map(n => `<td class="${n === coins ? 'col' : ''}">${VP.payout(k, n).toLocaleString('en-US')}</td>`).join('')}</tr>`).join('');
+}
+function info(){ $('#betTxt').textContent = `${coins} × ${fmt(denom)} = ${fmt(coins*denom)}`; $('#coinTxt').textContent = fmt(denom);
+  $('#denoms').innerHTML = DENOMS.map(d => `<button data-d="${d}" class="${d === denom ? 'on' : ''}" ${phase !== 'idle' || busy ? 'disabled' : ''}>${fmt(d)}</button>`).join('');
+  $$('#denoms button').forEach(b => b.onclick = () => { denom = +b.dataset.d; LS.set('vp.denom', denom); Snd.click(); info(); });
+  $('#dealBtn').textContent = phase === 'hold' ? 'Draw' : 'Deal'; $('#dealBtn').disabled = busy;
+  $('#oneBtn').disabled = $('#maxBtn').disabled = busy || phase !== 'idle'; }
+function cards(anim){
+  const cs = hand ? hand.cards : [null, null, null, null, null];
+  $('#vcards').innerHTML = cs.map((c, i) => `<div class="slot ${hand && hand.held[i] ? 'held' : ''}" data-i="${i}"><div class="held-lbl">Held</div>${cardHTML(c, {down: c === null, delay: anim && anim[i] !== undefined ? anim[i] : 0}).replace(anim && anim[i] !== undefined ? '' : 'class="card', anim && anim[i] !== undefined ? '' : 'style="animation:none" class="card')}<button class="btn hbtn ${hand && hand.held[i] ? 'on' : ''}" ${phase !== 'hold' || busy ? 'disabled' : ''}>Hold</button></div>`).join('');
+  $$('.slot').forEach(s => s.onclick = () => hold(+s.dataset.i));
+}
+function hold(i){ if (phase !== 'hold' || busy) return; hand.toggle(i); Snd.click(); cards(); }
+async function deal(){
+  if (busy) return;
+  if (phase === 'hold') return draw();
+  const bet = coins * denom;
+  if (bet > Bank.value + 1e-9){ if (Bank.value < 1){ Bank.refill(); return; } UI.flash('Not enough chips — lower the coin size or bet fewer coins', 'warn'); return; }
+  busy = true; Bank.take(bet); Snd.chips(Math.min(5, coins)); lastCat = null; table(); $('#winTxt').textContent = '$0';
+  hand = new VP.Hand(n => RNG.int(n)); phase = 'hold';
+  cards({0:0, 1:110, 2:220, 3:330, 4:440}); for (let i = 0; i < 5; i++) setTimeout(() => Snd.card(), i * 110);
+  await wait(800); const cat = VP.evaluate(hand.cards);
+  $('#handName').textContent = cat ? VP.NAMES[cat] : ''; UI.flash(cat ? `${VP.NAMES[cat]} — choose cards to hold, then Draw` : 'Choose cards to hold, then Draw');
+  busy = false; info(); cards();
+}
+async function draw(){
+  busy = true; info(); const before = hand.cards.slice(); hand.draw(); const anim = {}; let n = 0;
+  hand.cards.forEach((c, i) => { if (!hand.held[i]){ anim[i] = n * 120; setTimeout(() => Snd.card(), n * 120); n++; } });
+  cards(anim); await wait(n * 120 + 400);
+  const cat = VP.evaluate(hand.cards), bet = coins * denom, won = VP.payout(cat, coins) * denom;
+  Bank.add(won); LB.record(bet, won); lastCat = cat; table();
+  $('#handName').textContent = cat ? VP.NAMES[cat] : 'Game over'; $('#winTxt').textContent = fmt(won);
+  if (won > 0){ UI.flash(`${VP.NAMES[cat]} — you win ${fmt(won)}${won === bet ? ' (bet back)' : ''}`, 'win'); Snd.chips(Math.min(6, 2 + VP.ORDER.length - VP.ORDER.indexOf(cat))); Snd.win(VP.ORDER.indexOf(cat) <= 3); Voice.line(cat); }
+  else { UI.flash('No win — deal again'); }
+  phase = 'idle'; busy = false; info(); cards();
+  if (Bank.value < 1){ await wait(1500); Bank.refill(); }
+}
+$('#dealBtn').onclick = deal;
+$('#oneBtn').onclick = () => { if (phase !== 'idle' || busy) return; coins = coins % 5 + 1; LS.set('vp.coins', coins); Snd.chip(); table(); info(); };
+$('#maxBtn').onclick = () => { if (phase !== 'idle' || busy) return; coins = 5; LS.set('vp.coins', coins); table(); info(); deal(); };
+document.addEventListener('keydown', e => { if (LBUI.isOpen || e.metaKey || e.ctrlKey || /input/i.test(e.target.tagName)) return;
+  if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); deal(); } else if (/^[1-5]$/.test(e.key)) hold(+e.key - 1); });
+table(); info(); cards(); UI.flash('Choose a coin size and Deal — or Bet Max');
+window.__vp = { get hand(){ return hand; }, get phase(){ return phase; }, get busy(){ return busy; }, deal, hold, setCoins(n){ coins = n; table(); info(); } };
+})();
+</script>
+</body>
+</html>
