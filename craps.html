@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Craps · Cookies Casino</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="cc-core.css?v=3">
+<style>
+.g-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}
+@media (max-width:1050px){.g-grid{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.side .panel{margin:0}}
+.side .panel{margin-bottom:12px}
+#felt{display:grid;grid-template-columns:minmax(0,1fr) clamp(150px,19%,200px);gap:10px;padding:12px}
+@media (max-width:640px){#felt{grid-template-columns:1fr}}
+.main{display:flex;flex-direction:column;gap:8px}
+.cr{border-radius:12px;border:2px solid rgba(255,240,220,.7);color:rgba(255,246,225,.95);cursor:pointer;position:relative;font-family:Georgia,serif;text-transform:uppercase;letter-spacing:.12em;text-align:center;touch-action:manipulation;transition:background .15s,box-shadow .15s}
+.cr:hover{background:rgba(255,255,255,.07)}
+.cr.win{box-shadow:0 0 0 3px #fff6c0,0 0 22px rgba(255,246,192,.85);animation:spotpulse .7s ease-in-out infinite alternate}
+.cr.lose{box-shadow:0 0 0 3px rgba(40,0,15,.6);background:rgba(40,0,15,.25)}
+.cr.dim{opacity:.55}
+.cr small{display:block;font-size:9.5px;letter-spacing:.1em;opacity:.85;text-transform:none;font-family:Arial,sans-serif}
+.stks{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;gap:2px;padding:0 4px;pointer-events:none}
+.stks .stk{position:relative;display:grid;place-items:center}
+.stks .stk svg{width:38px;height:46px;filter:drop-shadow(0 3px 2px rgba(0,0,0,.5))}
+.stks .stk.o:after{content:"odds";position:absolute;bottom:-3px;font-size:8.5px;font-family:Arial,sans-serif;letter-spacing:.05em;color:#fff3d0;text-shadow:0 1px 2px #000}
+.nums{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.num{display:flex;flex-direction:column;gap:4px}
+.num .dcz,.num .cz{min-height:44px;font-size:9px;display:flex;align-items:center;padding-left:5px}
+.num .dcz{border-style:dashed;background:rgba(40,0,15,.18)}
+.num .pl{min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px}
+.num .pl b{font-size:clamp(24px,3vw,36px);letter-spacing:0;font-weight:400;line-height:1}
+.num .pl .stks{top:auto;height:56px;justify-content:center}
+.num .cz .stks,.num .dcz .stks{justify-content:flex-end}
+.puck{position:absolute;top:-10px;right:-8px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:800 11px Arial,sans-serif;letter-spacing:0;box-shadow:0 3px 6px rgba(0,0,0,.6);z-index:2;pointer-events:none}
+.puck.on{background:#fff;color:#111;border:3px solid #111}.puck.off{background:#111;color:#fff;border:3px solid #fff;position:static;flex:none}
+.row{display:grid;gap:8px}
+.r-come{grid-template-columns:1fr 2fr}.r-line{grid-template-columns:1fr 2fr}
+.big{min-height:62px;display:flex;flex-direction:column;justify-content:center;padding-left:12px;align-items:flex-start;font-size:clamp(13px,1.5vw,18px)}
+.big.pass{background:rgba(255,246,192,.08)}
+.field{min-height:62px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding-left:12px;font-size:clamp(13px,1.5vw,18px)}
+.field .fn{font-size:clamp(12px,1.4vw,16px);letter-spacing:.06em;text-transform:none}.field .fn i{font-style:normal;display:inline-grid;place-items:center;width:1.6em;height:1.6em;border-radius:50%;border:1.5px solid #fff3d0;margin-left:2px}
+.props{display:flex;flex-direction:column;gap:6px}
+.tray{border-radius:12px;background:rgba(40,0,15,.35);padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:inset 0 0 14px rgba(0,0,0,.45)}
+.dice{display:flex;gap:10px}
+.die{width:clamp(40px,4.4vw,52px);aspect-ratio:1;border-radius:22%;background:linear-gradient(145deg,#fff,#ffd6e8);box-shadow:inset -3px -4px 6px rgba(176,36,95,.35),0 4px 8px rgba(0,0,0,.5);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:12%}
+.die i{width:68%;aspect-ratio:1;border-radius:50%;background:#b0245f;place-self:center;visibility:hidden;box-shadow:inset 1px 1px 2px rgba(0,0,0,.4)}
+.die i.p{visibility:visible}
+.die.roll{animation:tumble .18s linear infinite}
+@keyframes tumble{0%{transform:rotate(0) translateY(0)}50%{transform:rotate(180deg) translateY(-6px)}100%{transform:rotate(360deg) translateY(0)}}
+.call{font-family:Georgia,serif;color:#fff3d0;font-size:13px;letter-spacing:.06em;min-height:1.3em;text-align:center}
+.hist{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
+.hist i{font-style:normal;font:700 10px Arial,sans-serif;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18);color:#fff}
+.hist i.s{background:#111}.hist i.pt{background:#fff;color:#111}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.pgrid .cr{min-height:48px;font-size:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2px}
+.pgrid .cr .dd{font-size:17px;letter-spacing:0;text-transform:none}
+.pgrid .cr.w2{grid-column:span 2}
+.pgrid .stks{justify-content:flex-end}.pgrid .stks .stk svg{width:30px;height:36px}
+.ph{font-size:9.5px;letter-spacing:.25em;color:rgba(255,240,220,.8);text-transform:uppercase;text-align:center;font-family:Georgia,serif;margin-top:2px}
+.btn.rm.on{background:linear-gradient(#e9567f,#a3214d);color:#fff}
+.small{font-size:12px;color:#cdb9c2;margin-top:6px;line-height:1.45}
+.ontbl{font-size:12.5px;color:#e6d9de;margin-top:4px}.ontbl b{color:#fff}
+</style>
+</head>
+<body>
+<main class="cc-main">
+  <div class="g-grid">
+    <div class="left"><section class="rail"><div class="felt" id="felt">
+      <div class="main">
+        <div class="nums" id="nums"></div>
+        <div class="row r-come">
+          <div class="cr big" data-k="dc">Don't Come<small>bar 12 · even money</small><div class="stks"></div></div>
+          <div class="cr big" data-k="come">Come<small>7 / 11 win · 2, 3, 12 lose · even money</small><div class="stks"></div></div>
+        </div>
+        <div class="cr field" data-k="field">Field<span class="fn">2 pays double <i>2</i><i>3</i><i>4</i><i>9</i><i>10</i><i>11</i><i>12</i> 12 pays triple</span><div class="stks"></div></div>
+        <div class="row r-line">
+          <div class="cr big" data-k="dp">Don't Pass<small>bar 12 · lay odds 6×</small><div class="stks"></div></div>
+          <div class="cr big pass" data-k="pass">Pass Line<small id="passHint">tap again after the point for 3-4-5× odds</small><div class="stks"></div></div>
+        </div>
+      </div>
+      <div class="props">
+        <div class="tray"><div class="dice" id="dice"></div><div class="call" id="call">Place your bets</div><div class="hist" id="hist"></div></div>
+        <div class="ph">Hardways</div>
+        <div class="pgrid">
+          <div class="cr" data-k="hard_6"><span class="dd">⚂⚂</span>9 to 1<div class="stks"></div></div>
+          <div class="cr" data-k="hard_10"><span class="dd">⚄⚄</span>7 to 1<div class="stks"></div></div>
+          <div class="cr" data-k="hard_8"><span class="dd">⚃⚃</span>9 to 1<div class="stks"></div></div>
+          <div class="cr" data-k="hard_4"><span class="dd">⚁⚁</span>7 to 1<div class="stks"></div></div>
+        </div>
+        <div class="ph">One roll</div>
+        <div class="pgrid">
+          <div class="cr w2" data-k="any7">Any Seven · 4 to 1<div class="stks"></div></div>
+          <div class="cr" data-k="ad"><span class="dd">⚀⚁</span>15 to 1<div class="stks"></div></div>
+          <div class="cr" data-k="yo"><span class="dd">⚄⚅</span>Yo · 15 to 1<div class="stks"></div></div>
+          <div class="cr" data-k="aces"><span class="dd">⚀⚀</span>30 to 1<div class="stks"></div></div>
+          <div class="cr" data-k="box"><span class="dd">⚅⚅</span>30 to 1<div class="stks"></div></div>
+          <div class="cr w2" data-k="craps">Any Craps · 7 to 1<div class="stks"></div></div>
+        </div>
+      </div>
+    </div></section>
+    <div class="rack" id="rack"><div class="actions">
+      <button class="btn rm" id="rmBtn" title="Tap bets to take them down">Remove</button><button class="btn" id="undoBtn">Undo</button><button class="btn gold" id="rollBtn">Roll</button>
+    </div></div></div>
+    <aside class="side">
+      <div class="panel"><h3>On the table</h3><div class="ontbl" id="ontbl"></div><div class="small" id="tip"></div></div>
+      <details class="panel" open><summary><h3>Rules &amp; house edge</h3></summary><div class="rules">
+        <table class="paytable"><tr><th>Bet</th><th class="r">Pays</th><th class="r">Edge</th></tr>
+        <tr><td>Pass / Come</td><td class="r">1:1</td><td class="r">1.41%</td></tr>
+        <tr><td>Don't Pass / Don't Come</td><td class="r">1:1</td><td class="r">1.36%</td></tr>
+        <tr><td>Odds 4/10 · 5/9 · 6/8</td><td class="r">2:1 · 3:2 · 6:5</td><td class="r">0%</td></tr>
+        <tr><td>Lay 4/10 · 5/9 · 6/8</td><td class="r">1:2 · 2:3 · 5:6</td><td class="r">0%</td></tr>
+        <tr><td>Place 6/8</td><td class="r">7:6</td><td class="r">1.52%</td></tr>
+        <tr><td>Place 5/9</td><td class="r">7:5</td><td class="r">4.00%</td></tr>
+        <tr><td>Place 4/10</td><td class="r">9:5</td><td class="r">6.67%</td></tr>
+        <tr><td>Field (2 ×2, 12 ×3)</td><td class="r">1:1</td><td class="r">2.78%</td></tr>
+        <tr><td>Hard 6/8</td><td class="r">9:1</td><td class="r">9.09%</td></tr>
+        <tr><td>Hard 4/10</td><td class="r">7:1</td><td class="r">11.1%</td></tr>
+        <tr><td>Any 7</td><td class="r">4:1</td><td class="r">16.7%</td></tr>
+        <tr><td>Any Craps</td><td class="r">7:1</td><td class="r">11.1%</td></tr>
+        <tr><td>Yo 11 · Ace-Deuce</td><td class="r">15:1</td><td class="r">11.1%</td></tr>
+        <tr><td>Aces · Boxcars</td><td class="r">30:1</td><td class="r">13.9%</td></tr></table>
+        <div class="small">Two crypto-random dice. Odds 3-4-5× (pass/come); lay up to 6× (don't). Place bets and hardways are off on the come-out roll; come odds are off on the come-out (returned if decided); lay odds always work.
+        Place and hardway bets stay up after a win. The Pass Line and come bets on a number can't be taken down; everything else can (Remove). Payouts round down to the cent. Bets stay on the table if you leave and come back.
+        Limits: line/come/place/field $5–$5,000, hardways and props $1–$1,000, $25,000 on the layout.</div></div></details>
+    </aside>
+  </div>
+</main>
+<script src="cc-core.js?v=3"></script>
+<script src="craps-rules.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+const {$, $$, fmt, fmtC, Bank, LB, LBUI, UI, Snd, Voice, RNG, LS, stackSVG, wait} = CC;
+CC.boot({game:'Craps'});
+const C = CRAPS, PTS = C.PTS, WORD = {2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve'};
+const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+const dieHTML = n => `<div class="die">${[...Array(9)].map((_, i) => `<i class="${PIPS[n].includes(i) ? 'p' : ''}"></i>`).join('')}</div>`;
+// table state persists (chips on the layout are already out of the bankroll)
+let st = LS.get('craps.table', null); if (!st || typeof st !== 'object' || !st.bets) st = {point:null, bets:{}};
+if (st.point != null && !PTS.includes(st.point)) st.point = null;
+for (const k in st.bets) if (!(st.bets[k] > 0)) delete st.bets[k];
+Bank.uncommitted = () => 0;
+let hist = LS.get('craps.hist', []), dice = LS.get('craps.dice', [3, 4]), busy = false, removing = false, log = [];
+const save = () => { LS.set('craps.table', st); Bank.save(); };
+const rack = UI.chipRack($('#rack'));
+$('#nums').innerHTML = PTS.map(N => `<div class="num">
+  <div class="cr dcz" data-k="dc_${N}" data-o="dcO_${N}">Don't come<div class="stks"></div></div>
+  <div class="cr pl" data-k="place_${N}"><b>${N === 6 ? 'SIX' : N === 9 ? 'NINE' : N}</b><small>place ${C.PLACE[N].join(':')}</small><div class="stks"></div></div>
+  <div class="cr cz" data-k="come_${N}" data-o="comeO_${N}">Come<div class="stks"></div></div></div>`).join('');
+const total = () => Object.values(st.bets).reduce((a, v) => a + v, 0);
+// which bet a tap on a spot means right now
+function target(el){
+  const k = el.dataset.k, o = el.dataset.o;
+  if (o) return removing ? (st.bets[o] ? o : k) : o;                                   // come/dc number boxes: add odds
+  if (k === 'pass' && st.point && !removing) return 'passO';
+  if (k === 'dp' && st.point && !removing) return 'dpO';
+  if (removing && (k === 'pass' || k === 'dp') && st.bets[k + 'O']) return k + 'O';
+  return k;
+}
+function render(){
+  const b = st.bets;
+  $$('#felt [data-k]').forEach(el => {
+    const k = el.dataset.k, o = el.dataset.o || ((k === 'pass' || k === 'dp') ? k + 'O' : null);
+    el.querySelector('.stks').innerHTML = `<div class="stk">${stackSVG(b[k] || 0)}</div>` + (o && b[o] ? `<div class="stk o">${stackSVG(b[o])}</div>` : '');
+    const off = (/^(place|hard)_/.test(k) && !st.point && b[k]);
+    el.classList.toggle('dim', !!off); el.title = off ? 'Off on the come-out roll' : '';
+  });
+  $$('.puck').forEach(p => p.remove());
+  if (st.point){ const pl = $(`[data-k="place_${st.point}"]`); pl.insertAdjacentHTML('beforeend', '<div class="puck on">ON</div>'); }
+  $('#dice').innerHTML = (st.point ? '' : '<div class="puck off">OFF</div>') + dieHTML(dice[0]) + dieHTML(dice[1]);
+  $('#hist').innerHTML = hist.slice(-14).map(h => `<i class="${h.t === 7 ? 's' : h.pt ? 'pt' : ''}">${h.t}</i>`).join('');
+  const t = total();
+  $('#ontbl').innerHTML = t ? Object.entries(b).map(([k, v]) => `${C.name(k)} <b>${fmt(v)}</b>`).join(' · ') + `<br>Total on the layout <b>${fmt(t)}</b>` : 'No bets on the table.';
+  $('#tip').textContent = st.point ? `Point is ${st.point}. Tap the Pass Line (or a Come number) to add odds — they pay true odds with no house edge.` : 'Come-out roll: bet the Pass Line or Don\'t Pass. 7 or 11 wins the Pass Line; 2, 3 or 12 loses.';
+  $('#passHint').textContent = st.point ? (b.pass ? `odds up to ${fmt(b.pass * C.ODDS_MULT[st.point])}` : 'contract bets only after the come-out') : 'tap again after the point for 3-4-5× odds';
+  $('#rollBtn').disabled = busy; $('#undoBtn').disabled = busy || !log.length; $('#rmBtn').classList.toggle('on', removing);
+}
+function add(k){
+  const v = rack.value, err = C.canAdd(st, k, v);
+  if (err){ UI.flash(err, 'warn'); return; }
+  if (v > Bank.value + 1e-9){ UI.flash('Not enough chips for that cookie — pick a smaller one', 'warn'); return; }
+  Bank.take(v); st.bets[k] = (st.bets[k] || 0) + v; log.push([k, v]); Snd.chip(); save(); render();
+}
+function takeDown(k){
+  if (!st.bets[k]){ return; }
+  const err = C.canRemove(st, k); if (err){ UI.flash(err, 'warn'); return; }
+  let back = st.bets[k]; delete st.bets[k];
+  const dep = k === 'dp' ? 'dpO' : /^dc_/.test(k) ? 'dcO_' + k.slice(3) : null;      // odds come down with their flat bet
+  if (dep && st.bets[dep]){ back += st.bets[dep]; delete st.bets[dep]; }
+  log = log.filter(x => st.bets[x[0]]); Bank.add(back); Snd.chip(.6); UI.flash(`${C.name(k)} taken down — ${fmt(back)} back`); save(); render();
+}
+$$('#felt [data-k]').forEach(el => el.addEventListener('click', () => { if (busy) return; const k = target(el); if (removing) takeDown(k); else add(k); }));
+$('#rmBtn').onclick = () => { removing = !removing; Snd.click(); UI.flash(removing ? 'Remove mode: tap a bet to take it down' : 'Remove mode off'); render(); };
+$('#undoBtn').onclick = () => { if (busy) return; const x = log.pop(); if (!x) return; const [k, v] = x; if ((st.bets[k] || 0) >= v){ st.bets[k] -= v; if (st.bets[k] <= 0) delete st.bets[k]; Bank.add(v); Snd.chip(.6); } save(); render(); };
+function callFor(r, before){
+  const t = r.total, w = WORD[t], hard = r.hard && [4, 6, 8, 10].includes(t);
+  if (before == null){
+    if (t === 7) return ['Seven, winner! Pay the line.', '7 — winner on the come-out'];
+    if (t === 11) return ['Yo eleven! Winner.', '11 — yo, winner on the come-out'];
+    if (t === 2) return ['Aces. Craps!', '2 — aces, craps'];
+    if (t === 3) return ['Ace deuce. Craps!', '3 — ace-deuce, craps'];
+    if (t === 12) return ['Boxcars. Craps!', '12 — boxcars, craps'];
+    return [`${w}. The point is ${w}.`, `${t} — the point is ${t}`];
+  }
+  if (t === 7) return ['Seven out!', '7 — seven out'];
+  if (t === before) return [`${hard ? 'Hard ' : ''}${w}! Winner, pay the line.`, `${t} — point made${hard ? ' (the hard way)' : ''}`];
+  if (t === 11) return ['Yo eleven.', '11 — yo'];
+  if (t === 2 || t === 3 || t === 12) return [{2:'Aces.',3:'Ace deuce.',12:'Boxcars.'}[t], `${t} — craps`];
+  return [`${hard ? 'Hard' : [4, 6, 8, 10].includes(t) ? 'Easy' : ''} ${w}.`.trim(), `${t}${hard ? ' — hard way' : [4, 6, 8, 10].includes(t) ? ' — easy' : ''}`];
+}
+async function roll(){
+  if (busy) return;
+  const err = C.belowMin(st.bets); if (err){ UI.flash(err, 'warn'); return; }
+  busy = true; removing = false; $$('#felt .cr').forEach(e => e.classList.remove('win', 'lose')); render();
+  const d1 = RNG.die(), d2 = RNG.die();
+  Snd.dice(); $$('#dice .die').forEach(d => d.classList.add('roll'));
+  const spinFaces = setInterval(() => { $$('#dice .die').forEach(d => d.outerHTML = dieHTML(RNG.die()).replace('class="die"', 'class="die roll"')); }, 110);
+  await wait(850); clearInterval(spinFaces);
+  dice = [d1, d2]; LS.set('craps.dice', dice);
+  const before = st.point, r = C.roll(st, d1, d2);
+  st = {point: r.point, bets: r.bets}; log = [];
+  hist.push({t: r.total, pt: before != null && r.total === before}); if (hist.length > 40) hist = hist.slice(-40); LS.set('craps.hist', hist);
+  if (r.credit) Bank.add(r.credit);
+  if (r.res.length) LB.record(r.wagered, r.returned);
+  save(); busy = false; render();
+  const [say, txt] = callFor(r, before); $('#call').textContent = txt; Voice.say(say);
+  for (const x of r.res){ const el = $(`#felt [data-k="${x.k}"]`) || $(`#felt [data-o="${x.k}"]`) || (x.k === 'passO' && $('[data-k="pass"]')) || (x.k === 'dpO' && $('[data-k="dp"]'));
+    if (el && x.kind !== 'push') el.classList.add(x.kind); }
+  const net = Math.round((r.returned - r.wagered) * 100) / 100;
+  if (!r.res.length) UI.flash(txt);
+  else if (net > 0){ UI.flash(`${txt} — you win ${fmtC(net)}`, 'win'); Snd.chips(Math.min(6, 2 + Math.floor(Math.log10(net + 1)))); Snd.win(net >= 10 * Math.max(1, r.wagered / 2)); }
+  else if (net < 0){ UI.flash(`${txt} — ${fmtC(-net)} to the house`); Snd.lose(); }
+  else UI.flash(`${txt} — even`);
+  setTimeout(() => $$('#felt .cr').forEach(e => e.classList.remove('lose')), 1600);
+  if (Bank.value < 5 && !total()){ await wait(1500); Bank.refill(); }
+}
+$('#rollBtn').onclick = roll;
+document.addEventListener('keydown', e => { if (LBUI.isOpen || e.metaKey || e.ctrlKey || /input/i.test(e.target.tagName)) return; if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); roll(); } });
+render(); UI.flash(st.point ? `Point is ${st.point} — your bets are still on the table` : 'Bet the Pass Line, then Roll');
+if (Bank.value < 5 && !total()) Bank.refill();
+window.__cr = { roll, add, takeDown, get st(){ return st; }, get busy(){ return busy; }, set chip(v){ rack.value = v; }, rollFixed: null };
+})();
+</script>
+</body>
+</html>
