@@ -184,6 +184,7 @@ details.panel>summary h3{display:flex;justify-content:space-between;margin:0}det
     <div class="sub">Roulette &middot; Salon Privé</div>
   </div>
   <div class="top-tools">
+    <a class="icon-btn" href="lobby.html" title="All Cookies Casino games" style="text-decoration:none;font-weight:600">🍪 All Games</a>
     <button class="icon-btn" id="voiceBtn" title="Dealer voice on/off">Dealer: On</button>
     <button class="icon-btn" id="voicePick" title="Change dealer voice" style="display:none">🎙 Voice</button>
     <button class="icon-btn" id="muteBtn" title="Mute / unmute sound (M)"></button>
@@ -1165,9 +1166,9 @@ const LBUI = {
         el.innerHTML = '<span class="rk"></span><span class="nm"></span><span class="pl"></span><span class="pk"></span><span class="sp"></span>';
         const c = el.children; c[0].textContent = r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : '#' + r.rank; c[1].textContent = r.nickname;
         c[2].textContent = fmtPnl(+r.net); if (pnlCls(+r.net)) c[2].classList.add(pnlCls(+r.net)); c[3].textContent = fmt(+r.peak);
-        c[4].textContent = (+r.spins).toLocaleString('en-US'); el.title = `${r.nickname}: P&L ${fmtPnl(+r.net)} · highest bankroll ${fmt(+r.peak)} · ${r.spins} spins`; return el; };
+        c[4].textContent = (+r.spins).toLocaleString('en-US'); el.title = `${r.nickname}: P&L ${fmtPnl(+r.net)} · highest bankroll ${fmt(+r.peak)} · ${r.spins} rounds`; return el; };
       if ((d.top || []).length){ const h = document.createElement('div'); h.className = 'lb-row lb-head';
-        h.innerHTML = `<span>#</span><span>Player</span><span class="${sort === 'pnl' ? 'on' : ''}">P&amp;L</span><span class="${sort === 'peak' ? 'on' : ''}">Highest</span><span>Spins</span>`; list.appendChild(h); }
+        h.innerHTML = `<span>#</span><span>Player</span><span class="${sort === 'pnl' ? 'on' : ''}">P&amp;L</span><span class="${sort === 'peak' ? 'on' : ''}">Highest</span><span>Rounds</span>`; list.appendChild(h); }
       (d.top || []).forEach(r => list.appendChild(row(r, r.me)));
       if (d.me && !(d.top || []).some(r => r.me)){ const gap = document.createElement('div'); gap.className = 'lb-gap'; gap.textContent = '···'; list.appendChild(gap); list.appendChild(row(d.me, true)); }
       if (!(d.top || []).length) list.innerHTML = '<div class="lb-empty">No scores yet — be the first cookie on the board!</div>';

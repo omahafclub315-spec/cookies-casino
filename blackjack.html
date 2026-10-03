@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blackjack · Cookies Casino</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="cc-core.css?v=1">
+<style>
+.bj-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}
+@media (max-width:1050px){.bj-grid{grid-template-columns:1fr}#felt{min-height:clamp(420px,calc(100vh - 470px),640px);min-height:clamp(420px,calc(100dvh - 470px),640px)}.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.side .panel{margin:0}}
+.side .panel{margin-bottom:12px}
+#felt{--cw:clamp(52px,6.2vw,78px);min-height:clamp(430px,calc(100vh - 290px),640px);min-height:clamp(430px,calc(100dvh - 290px),640px);display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px 18px}
+.dz{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:calc(var(--cw)*1.4 + 34px)}
+.arc{margin:2px 0}
+.hands{display:flex;justify-content:center;align-items:flex-end;gap:14px;flex-wrap:wrap;min-height:calc(var(--cw)*1.4 + 90px)}
+.hands.n3,.hands.n4{--cw:clamp(44px,4.8vw,60px);gap:8px}
+.hand{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 10px;border-radius:16px;transition:box-shadow .2s,background .2s}
+.hand.active{background:rgba(255,246,200,.1);box-shadow:0 0 0 2px rgba(255,246,192,.85),0 0 22px rgba(255,246,192,.35)}
+.hand .stk svg{width:44px;height:54px}
+.hand .meta{display:flex;gap:6px;align-items:center;min-height:26px}
+.betzone{display:flex;flex-direction:column;align-items:center;gap:6px}
+#betSpot{width:118px;height:118px}
+#betSpot .lbl{font-size:11px;line-height:1.5}
+#betSpot.has .lbl{opacity:0}
+.insure{display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.55);border:1px solid rgba(243,220,149,.6);border-radius:14px;padding:10px 14px;font-family:Georgia,serif;letter-spacing:.08em;color:#fff6dc}
+.insure[hidden]{display:none}
+.shoe{height:12px;border-radius:6px;background:rgba(255,255,255,.08);position:relative;overflow:hidden;border:1px solid rgba(216,178,90,.35)}
+.shoe i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#ff86bb,#c2185b)}
+.shoe b{position:absolute;top:-2px;bottom:-2px;width:3px;background:#f3dc95;left:75%}
+.small{font-size:12px;color:#cdb9c2;margin-top:6px}
+.keys{font-size:12px;color:#cdb9c2;line-height:1.8}.keys kbd{border:1px solid #6b6248;border-radius:4px;padding:0 5px;font-size:11px;color:#efe2bd}
+#acts .play[hidden],#acts .bet[hidden]{display:none}
+</style>
+</head>
+<body>
+<main class="cc-main">
+  <div class="bj-grid">
+    <div class="left"><section class="rail"><div class="felt" id="felt">
+      <div class="dz"><div class="cards" id="dCards"></div><div class="meta"><span class="tag" id="dTot" hidden></span></div></div>
+      <div class="arc"><div class="felt-print big">Blackjack pays 3 to 2</div><div class="felt-print">Dealer stands on all 17s · Insurance pays 2 to 1</div></div>
+      <div class="insure" id="insure" hidden><span>Insurance?</span><button class="btn pink" id="insYes">Yes</button><button class="btn" id="insNo">No thanks</button></div>
+      <div class="hands" id="hands"></div>
+      <div class="betzone" id="betZone"><div class="spot" id="betSpot" role="button" tabindex="0" aria-label="Bet spot — tap to add the selected chip"><span class="lbl">Tap to bet<br>$5 – $5,000</span><div class="stk" id="betStk"></div></div></div>
+    </div></section>
+  <div class="rack" id="rack"><div class="actions" id="acts">
+    <span class="bet"><button class="btn" id="undoBtn">Undo</button> <button class="btn" id="clearBtn">Clear</button></span>
+    <span class="play" hidden><button class="btn" id="hitBtn">Hit</button> <button class="btn" id="standBtn">Stand</button> <button class="btn" id="dblBtn">Double</button> <button class="btn" id="splitBtn">Split</button> <button class="btn" id="surBtn">Surrender</button></span>
+    <button class="btn gold" id="dealBtn">Deal</button>
+  </div></div></div>
+    <aside class="side">
+      <div class="panel"><h3>Shoe</h3><div class="shoe" title="Cut card at 75%"><i id="shoeBar"></i><b></b></div><div class="small" id="shoeTxt"></div></div>
+      <details class="panel" open><summary><h3>Rules &amp; payouts</h3></summary><div class="rules"><ul>
+        <li>6 decks, reshuffled when the cut card (75%) comes out</li><li>Blackjack pays <b>3:2</b> · wins pay 1:1</li>
+        <li>Dealer stands on soft 17 and peeks for blackjack</li><li>Insurance pays <b>2:1</b> (offered on an Ace)</li>
+        <li>Double on any two cards, also after splitting</li><li>Split up to 4 hands · split Aces get one card, no resplit</li>
+        <li>Late surrender: give up half your bet</li><li>Table limits $5 – $5,000</li><li>House edge ≈ <b id="edge">0.34%</b> with perfect basic strategy</li></ul></div></details>
+      <div class="panel keys"><h3>Shortcuts</h3><kbd>Space</kbd> deal · <kbd>H</kbd> hit · <kbd>S</kbd> stand · <kbd>D</kbd> double · <kbd>P</kbd> split · <kbd>R</kbd> surrender · <kbd>⌫</kbd> undo</div>
+    </aside>
+  </div>
+</main>
+<script src="cc-core.js?v=1"></script>
+<script src="bj-rules.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+const {$, $$, fmt, fmtPnl, Bank, LB, LBUI, UI, Snd, Voice, RNG, LS, cardHTML, stackSVG, wait} = CC;
+CC.boot({game:'Blackjack'});
+Object.assign(Voice.lines, { deal:[['Good luck!'], ['Here we go.']], bj:[['Blackjack!'], ['Blackjack! Nice!']], dealerbj:[['Dealer has blackjack.']],
+  insurance:[['Insurance?']], bust:[['Bust.'], ['Too many.']], dealerbust:[['Dealer busts!']], shuffle:[['Shuffling the shoe.']] });
+const R = BJ.RULES, shoe = new BJ.Shoe(n => RNG.int(n));
+let phase = 'betting', bet = 0, chipLog = [], lastBet = +LS.get('bj.last', 0) || 0, round = null, busy = false, seen = new Set();
+Bank.uncommitted = () => phase === 'betting' ? bet : 0;
+const rack = UI.chipRack($('#rack'));
+const hv = cards => { const v = BJ.value(cards); return v.soft && v.total < 21 ? `${v.total - 10}/${v.total}` : String(v.total); };
+
+function renderBet(){ $('#betStk').innerHTML = stackSVG(bet); $('#betSpot').classList.toggle('has', bet > 0); buttons(); }
+function placeChip(v){
+  if (phase !== 'betting' || busy) return;
+  if (bet + v > R.maxBet){ UI.flash(`Table maximum is ${fmt(R.maxBet)}`, 'warn'); return; }
+  if (v > Bank.value){ UI.flash('Not enough chips for that cookie — pick a smaller one', 'warn'); return; }
+  Bank.take(v); bet += v; chipLog.push(v); Bank.save(); Snd.chip(); clearTable(); renderBet();
+}
+function undo(){ if (phase !== 'betting' || !chipLog.length) return; const v = chipLog.pop(); bet -= v; Bank.add(v); Snd.chip(.6); renderBet(); }
+function clearBet(){ if (phase !== 'betting' || !bet) return; Bank.add(bet); bet = 0; chipLog = []; Snd.chips(2); renderBet(); }
+function clearTable(){ if (round && round.phase === 'done'){ round = null; seen.clear(); $('#hands').innerHTML = ''; $('#dCards').innerHTML = ''; $('#dTot').hidden = true; } }
+
+// render with deal animation only for cards not shown before; returns ms until the last new card lands
+function render(){
+  if (!round) return 0;
+  const step = 330, fresh = [];
+  const holeDown = round.phase === 'insurance' || round.phase === 'player';
+  const dk = round.dealer.cards.map((c, i) => i === 1 && holeDown ? 'd:1:down' : `d:${i}:${c}`);
+  dk.forEach((k, i) => { if (!seen.has(k)) fresh.push({k, i, z:1}); });
+  round.hands.forEach((h, hi) => h.cards.forEach((c, i) => { const k = `h${hi}:${i}:${c}:${round.hands.length}`; if (!seen.has(k)) fresh.push({k, i, z:0}); }));
+  fresh.sort((a, b) => a.i - b.i || a.z - b.z);
+  const delay = {}; fresh.forEach((f, n) => { delay[f.k] = n * step; seen.add(f.k); setTimeout(() => f.k.endsWith('down') || f.k.startsWith('d:1') ? Snd.flip() : Snd.card(), n * step); });
+  const cardEl = (c, k, down) => { const d = delay[k]; const h = cardHTML(c, {down, delay: d || 0, cls: (d === undefined ? '' : (k.startsWith('d:1:') && !down ? 'flip' : ''))});
+    return d === undefined ? h.replace('class="card', 'style="animation:none" class="card') : h; };
+  $('#dCards').innerHTML = round.dealer.cards.map((c, i) => cardEl(c, dk[i], i === 1 && holeDown)).join('');
+  const dt = $('#dTot'); dt.hidden = false; dt.textContent = holeDown ? hv([round.dealer.cards[0]]) : hv(round.dealer.cards);
+  const H = $('#hands'); H.className = 'hands n' + round.hands.length;
+  H.innerHTML = round.hands.map((h, hi) => {
+    const active = round.phase === 'player' && hi === round.active && round.hands.length > 0;
+    const cards = h.cards.map((c, i) => cardEl(c, `h${hi}:${i}:${c}:${round.hands.length}`, false)).join('');
+    let res = '';
+    if (round.phase === 'done'){ const net = h.returned - h.bet;
+      res = ({blackjack:`<span class="tag win">Blackjack +${fmt(net)}</span>`, win:`<span class="tag win">Win +${fmt(net)}</span>`, push:'<span class="tag push">Push</span>',
+        bust:'<span class="tag lose">Bust</span>', lose:'<span class="tag lose">Lose</span>', surrender:`<span class="tag push">Surrender −${fmt(h.bet/2)}</span>`})[h.result]; }
+    return `<div class="hand ${active ? 'active' : ''}"><div class="cards">${cards}</div><div class="meta"><span class="tag">${hv(h.cards)}</span>${res}</div><div class="stk">${stackSVG(h.bet)}</div></div>`;
+  }).join('');
+  return fresh.length ? (fresh.length - 1) * step + 360 : 0;
+}
+function shoeUI(){ const used = shoe.pos, tot = shoe.cards.length; $('#shoeBar').style.width = (used / tot * 100).toFixed(1) + '%';
+  $('#shoeTxt').textContent = `${tot - used} of ${tot} cards left · 6 decks` + (shoe.needsShuffle() ? ' · shuffle next hand' : ''); }
+function buttons(){
+  const playing = phase === 'play' && round && round.phase === 'player';
+  $('#acts .bet').hidden = phase !== 'betting'; $('#acts .play').hidden = !playing;
+  const deal = $('#dealBtn'); deal.hidden = phase !== 'betting';
+  const canRebet = !bet && lastBet >= R.minBet && lastBet <= Bank.value;
+  deal.textContent = bet ? 'Deal' : canRebet ? `Rebet ${fmt(lastBet)} & Deal` : 'Deal';
+  deal.disabled = busy || (!bet && !canRebet); $('#undoBtn').disabled = !chipLog.length || busy; $('#clearBtn').disabled = !bet || busy;
+  if (playing){ const h = round.hand, afford = Bank.value >= h.bet;
+    $('#hitBtn').disabled = busy || !round.canHit(); $('#standBtn').disabled = busy || !round.canStand();
+    $('#dblBtn').disabled = busy || !round.canDouble() || !afford; $('#splitBtn').disabled = busy || !round.canSplit() || !afford; $('#surBtn').disabled = busy || !round.canSurrender(); }
+  $('#betSpot').classList.toggle('locked', phase !== 'betting'); $('#betZone').style.visibility = phase === 'betting' ? 'visible' : 'hidden';
+}
+
+async function deal(){
+  if (phase !== 'betting' || busy) return;
+  if (!bet && lastBet >= R.minBet && lastBet <= Bank.value){ Bank.take(lastBet); bet = lastBet; chipLog = [lastBet]; renderBet(); }
+  if (bet < R.minBet){ UI.flash(`Minimum bet is ${fmt(R.minBet)}`, 'warn'); return; }
+  busy = true; clearTable(); round = null; seen.clear(); $('#hands').innerHTML = ''; $('#dCards').innerHTML = '';
+  if (shoe.needsShuffle()){ UI.flash('Shuffling a fresh 6-deck shoe…'); Voice.line('shuffle'); Snd.shuffle(); shoe.shuffle(); shoeUI(); await wait(1100); }
+  phase = 'play'; lastBet = bet; LS.set('bj.last', bet); const stake = bet; bet = 0; chipLog = []; Bank.save(); renderBet();
+  round = new BJ.Round(shoe, stake).start(); UI.flash('Good luck!'); Voice.line('deal');
+  buttons(); await wait(render()); shoeUI();
+  await afterAction();
+}
+async function afterAction(){
+  if (round.phase === 'insurance'){
+    const cost = round.baseBet / 2, ok = Bank.value >= cost;
+    $('#insYes').textContent = `Yes (${fmt(cost)})`; $('#insYes').disabled = !ok; $('#insure').hidden = false; busy = false; buttons();
+    UI.flash(BJ.value(round.hands[0].cards).total === 21 ? 'Dealer shows an Ace — insurance? (even money on your blackjack)' : 'Dealer shows an Ace — insurance?'); Voice.line('insurance'); return;
+  }
+  if (round.phase === 'player'){ busy = false; buttons(); const h = round.hand;
+    UI.flash(round.hands.length > 1 ? `Hand ${round.active + 1} of ${round.hands.length}: ${hv(h.cards)}` : `You have ${hv(h.cards)} · dealer shows ${hv([round.upcard])}`); return; }
+  await finish();
+}
+async function insurance(take){
+  if (!round || round.phase !== 'insurance') return;
+  $('#insure').hidden = true; busy = true;
+  if (take){ if (!Bank.take(round.baseBet / 2)) take = false; else Snd.chips(2); }
+  round.decideInsurance(take);
+  if (round.phase !== 'done' && round.peeked){ UI.flash('Dealer checks for blackjack… no blackjack'); await wait(700); }
+  await wait(render()); await afterAction();
+}
+async function act(name){
+  if (busy || !round || round.phase !== 'player') return;
+  const h = round.hand;
+  if ((name === 'double' || name === 'split') && !Bank.take(h.bet)){ UI.flash('Not enough chips to ' + name, 'warn'); return; }
+  busy = true; buttons(); if (name === 'double' || name === 'split') Snd.chips(2);
+  round[name]();
+  await wait(render()); shoeUI();
+  if (name === 'hit' && h.bust) Voice.line('bust');
+  await afterAction();
+}
+async function finish(){
+  phase = 'done'; busy = true; buttons();
+  const ms = render(); await wait(ms + 250); shoeUI();
+  Bank.add(round.returned); LB.record(round.wagered, round.returned);
+  const net = round.returned - round.wagered, dv = BJ.value(round.dealer.cards).total, hs = round.hands;
+  if (round.returned > 0) Snd.chips(4);
+  if (hs.length === 1 && hs[0].result === 'blackjack'){ UI.flash(`Blackjack! You win ${fmt(net)}`, 'win'); Snd.win(true); Voice.line('bj'); }
+  else if (round.dealerBJ){ UI.flash(round.insurance ? `Dealer blackjack — insurance pays ${fmt(round.insurance*2)}${net === 0 ? ' · even' : ''}` : 'Dealer has blackjack', net >= 0 ? 'win' : 'info'); Voice.line('dealerbj'); Snd.lose(); }
+  else if (net > 0){ UI.flash(`${dv > 21 ? 'Dealer busts — ' : ''}You win ${fmt(net)}`, 'win'); Snd.win(net >= round.baseBet * 2); Voice.line(dv > 21 ? 'dealerbust' : net >= round.baseBet * 2 ? 'bigwin' : 'win'); }
+  else if (net === 0){ UI.flash('Push — your bet is returned'); Voice.line('push'); }
+  else { UI.flash(hs.every(h => h.result === 'bust') ? 'Bust — the house wins' : hs.every(h => h.result === 'surrender') ? `Surrendered — ${fmt(-net)} back to the house` : `Dealer has ${dv} — the house wins`); Snd.lose(); if (!hs.every(h => h.result === 'bust')) Voice.line('lose'); }
+  phase = 'betting'; busy = false; buttons();
+  if (Bank.value < R.minBet){ await wait(1500); Bank.refill(); buttons(); }
+}
+
+$('#betSpot').addEventListener('click', () => placeChip(rack.value));
+$('#betSpot').addEventListener('keydown', e => { if (e.key === 'Enter') placeChip(rack.value); });
+$('#undoBtn').onclick = undo; $('#clearBtn').onclick = clearBet; $('#dealBtn').onclick = deal;
+$('#hitBtn').onclick = () => act('hit'); $('#standBtn').onclick = () => act('stand'); $('#dblBtn').onclick = () => act('double');
+$('#splitBtn').onclick = () => act('split'); $('#surBtn').onclick = () => act('surrender');
+$('#insYes').onclick = () => insurance(true); $('#insNo').onclick = () => insurance(false);
+document.addEventListener('keydown', e => {
+  if (LBUI.isOpen || e.metaKey || e.ctrlKey || e.altKey || /input|textarea/i.test(e.target.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (k === ' ' || k === 'enter'){ e.preventDefault(); if (phase === 'betting') deal(); else if (round && round.phase === 'player') act('stand'); }
+  else if (k === 'h') act('hit'); else if (k === 's') act('stand'); else if (k === 'd' && !$('#dblBtn').disabled) act('double');
+  else if (k === 'p' && !$('#splitBtn').disabled) act('split'); else if (k === 'r' && !$('#surBtn').disabled) act('surrender');
+  else if (k === 'backspace' && phase === 'betting'){ e.preventDefault(); undo(); }
+  else if (k === 'y' && round && round.phase === 'insurance') insurance(true); else if (k === 'n' && round && round.phase === 'insurance') insurance(false);
+});
+renderBet(); shoeUI(); buttons(); UI.flash('Place your bet — tap the circle');
+window.__bj = { get round(){ return round; }, get phase(){ return phase; }, get bet(){ return bet; }, shoe, placeChip, deal, act, insurance };
+})();
+</script>
+</body>
+</html>

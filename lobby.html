@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lobby · Cookies Casino</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="cc-core.css?v=1">
+<style>
+.lobby{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media (max-width:1000px){.lobby{grid-template-columns:1fr}}
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.game{position:relative;display:flex;flex-direction:column;border-radius:20px;overflow:hidden;text-decoration:none;color:inherit;min-height:250px;
+  background:linear-gradient(180deg,#2a0b1c,#12040c);border:1.5px solid rgba(216,178,90,.55);box-shadow:0 14px 30px rgba(0,0,0,.55);transition:transform .15s,box-shadow .15s}
+.game:hover{transform:translateY(-3px);box-shadow:0 18px 36px rgba(0,0,0,.6),0 0 0 2px rgba(243,220,149,.6)}
+.game .art{height:140px;display:grid;place-items:center;font-size:62px;position:relative;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.35'/></svg>"),
+   radial-gradient(ellipse at 50% 40%,#f0649f 0%,#d83f80 45%,#9d1f55 100%);border-bottom:1px solid rgba(243,220,149,.5);text-shadow:0 6px 10px rgba(0,0,0,.45)}
+.game .art small{position:absolute;bottom:8px;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,246,225,.9);font-family:Georgia,serif;text-shadow:none}
+.game .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.game h2{margin:0;font-family:Didot,"Bodoni 72","Playfair Display",Georgia,serif;font-weight:400;letter-spacing:.12em;text-transform:uppercase;font-size:20px;color:#fff3d0}
+.game p{margin:0;font-size:12.5px;color:#d9c3cc;line-height:1.4;flex:1}
+.game .edge{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#cdb47a}
+.game.soon{pointer-events:none;filter:grayscale(.6) brightness(.7)}
+.game.soon:after{content:"Coming soon";position:absolute;top:12px;right:-34px;transform:rotate(35deg);background:#f3dc95;color:#3a1206;font-size:11px;font-weight:700;letter-spacing:.12em;padding:4px 40px;text-transform:uppercase}
+.stats{display:grid;grid-template-columns:1fr auto;gap:6px 10px;font-size:13.5px}.stats span:nth-child(even){text-align:right;font-family:Georgia,serif;color:#fff;font-variant-numeric:tabular-nums}
+.side .panel{margin-bottom:14px}
+.side .btn{width:100%;margin-top:8px}
+.welcome{font-family:Georgia,serif;letter-spacing:.06em;color:#f3e3ea;font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<main class="cc-main">
+  <div class="lobby">
+    <section class="games" id="games"></section>
+    <aside class="side">
+      <div class="panel"><h3>Your cookies</h3><div class="stats" id="stats"></div>
+        <button class="btn pink" id="lbBtn">🏆 Leaderboard</button><button class="btn" id="buyBtn">Buy-in: reset bankroll to $300</button></div>
+      <div class="panel welcome"><h3>How it works</h3>One bankroll is shared by every game. Your lifetime profit &amp; loss, total rounds and highest bankroll count toward the online leaderboard, whichever table you play.
+        Run out of chips and the house bakes you a fresh $300. All shuffles, spins and rolls use your device's cryptographic random generator.</div>
+    </aside>
+  </div>
+</main>
+<script src="cc-core.js?v=1"></script>
+<script>
+(function(){
+const {$, fmt, fmtPnl, pnlCls, Bank, LB, LBUI, UI, LS, START_BANK} = CC;
+CC.boot({game:'Lobby', lobby:false});
+const GAMES = [
+  {href:'index.html', name:'Roulette', art:'🎡', tag:'American or European wheel', desc:'Inside and outside bets on the classic pink felt, with the dealer calling every number.', edge:'Edge 5.26% (00) · 2.70% (0)', ready:true},
+  {href:'blackjack.html', name:'Blackjack', art:'🃏', tag:'6 decks · 3:2', desc:'Beat the dealer to 21. Double, split up to 4 hands, insurance and late surrender.', edge:'Edge ≈ 0.34% with basic strategy', ready:true},
+  {href:'slots.html', name:'Cookie Slots', art:'🎰', tag:'3 reels · 5 lines', desc:'Line up cookies, cupcakes and golden cookies for up to 1,000× your line bet.', edge:'', ready:false},
+  {href:'craps.html', name:'Craps', art:'🎲', tag:'Pass · odds · props', desc:'Pass and don\'t pass, come bets, free odds, place bets, field, hardways and one-roll props.', edge:'', ready:false},
+  {href:'baccarat.html', name:'Baccarat', art:'👑', tag:'8 decks · punto banco', desc:'Player, Banker or Tie, plus Player and Banker pair side bets.', edge:'', ready:false},
+  {href:'videopoker.html', name:'Video Poker', art:'🂡', tag:'9/6 Jacks or Better', desc:'Full-pay Jacks or Better. Hold, draw and chase the 4,000-coin royal flush.', edge:'', ready:false},
+  {href:'threecard.html', name:'Three Card Poker', art:'♠️', tag:'Ante · Play · Pair Plus', desc:'Beat the dealer\'s three cards. Ante bonus and Pair Plus up to 40 to 1.', edge:'', ready:false}
+];
+$('#games').innerHTML = GAMES.map(g => `<a class="game ${g.ready ? '' : 'soon'}" href="${g.href}"><div class="art">${g.art}<small>${g.tag}</small></div>
+  <div class="body"><h2>${g.name}</h2><p>${g.desc}</p><div class="edge">${g.edge}</div></div></a>`).join('');
+function stats(){
+  $('#stats').innerHTML = `<span>Bankroll</span><span>${fmt(Bank.value)}</span><span>Lifetime P&amp;L</span><span class="${pnlCls(LB.net)}">${fmtPnl(LB.net)}</span>
+    <span>Highest bankroll</span><span>${fmt(LB.peak)}</span><span>Rounds played</span><span>${LB.spins.toLocaleString('en-US')}</span><span>Total wagered</span><span>${fmt(LB.wagered)}</span>
+    <span>Leaderboard name</span><span>${LB.nick ? CC.esc(LB.nick) : '—'}</span>`;
+}
+stats(); setInterval(stats, 3000);
+$('#lbBtn').onclick = () => LBUI.open();
+$('#buyBtn').onclick = () => { if (!confirm('Reset your bankroll to $300? Your leaderboard P&L and highest bankroll are kept.')) return; Bank.set(START_BANK); CC.Snd.chips(5); UI.flash('Buy-in: $300 in chips'); stats(); };
+UI.flash(LB.nick ? `Welcome back, ${LB.nick}! Pick a table` : 'Welcome! Pick a table');
+if (!LB.nick && !LS.get('lb.asked', false)) setTimeout(() => { if (!LBUI.isOpen) LBUI.open(); }, 1200);
+})();
+</script>
+</body>
+</html>
