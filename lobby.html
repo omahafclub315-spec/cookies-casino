@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lobby · Cookies Casino</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%AA%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="cc-core.css?v=1">
+<link rel="stylesheet" href="cc-core.css?v=2">
 <style>
 .lobby{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
 @media (max-width:1000px){.lobby{grid-template-columns:1fr}}
@@ -41,7 +41,7 @@
     </aside>
   </div>
 </main>
-<script src="cc-core.js?v=1"></script>
+<script src="cc-core.js?v=2"></script>
 <script>
 (function(){
 const {$, fmt, fmtPnl, pnlCls, Bank, LB, LBUI, UI, LS, START_BANK} = CC;
@@ -51,7 +51,7 @@ const GAMES = [
   {href:'blackjack.html', name:'Blackjack', art:'🃏', tag:'6 decks · 3:2', desc:'Beat the dealer to 21. Double, split up to 4 hands, insurance and late surrender.', edge:'Edge ≈ 0.34% with basic strategy', ready:true},
   {href:'slots.html', name:'Cookie Slots', art:'🎰', tag:'3 reels · 5 lines', desc:'Line up cookies, cupcakes and golden cookies for up to 1,000× your line bet.', edge:'', ready:false},
   {href:'craps.html', name:'Craps', art:'🎲', tag:'Pass · odds · props', desc:'Pass and don\'t pass, come bets, free odds, place bets, field, hardways and one-roll props.', edge:'', ready:false},
-  {href:'baccarat.html', name:'Baccarat', art:'👑', tag:'8 decks · punto banco', desc:'Player, Banker or Tie, plus Player and Banker pair side bets.', edge:'', ready:false},
+  {href:'baccarat.html', name:'Baccarat', art:'👑', tag:'8 decks · punto banco', desc:'Player, Banker or Tie, plus Player and Banker pair side bets.', edge:'Edge 1.06% Banker · 1.24% Player', ready:true},
   {href:'videopoker.html', name:'Video Poker', art:'🂡', tag:'9/6 Jacks or Better', desc:'Full-pay Jacks or Better. Hold, draw and chase the 4,000-coin royal flush.', edge:'', ready:false},
   {href:'threecard.html', name:'Three Card Poker', art:'♠️', tag:'Ante · Play · Pair Plus', desc:'Beat the dealer\'s three cards. Ante bonus and Pair Plus up to 40 to 1.', edge:'', ready:false}
 ];

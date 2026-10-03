@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baccarat · Cookies Casino</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="cc-core.css?v=2">
+<style>
+.g-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}
+@media (max-width:1050px){.g-grid{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.side .panel{margin:0}
+  #felt{min-height:clamp(420px,calc(100vh - 470px),620px)!important;min-height:clamp(420px,calc(100dvh - 470px),620px)!important}}
+.side .panel{margin-bottom:12px}
+#felt{--cw:clamp(52px,6vw,76px);min-height:clamp(420px,calc(100vh - 290px),620px);min-height:clamp(420px,calc(100dvh - 290px),620px);display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.hands2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.hbox{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px;border-radius:16px;border:2px solid rgba(255,240,220,.35);min-height:calc(var(--cw)*1.4 + 70px)}
+.hbox h4{margin:0;font-family:Georgia,serif;font-weight:400;letter-spacing:.3em;text-transform:uppercase;font-size:15px}
+.hbox.p h4{color:#cfe3ff}.hbox.b h4{color:#ffd0d6}
+.hbox.won{box-shadow:0 0 0 3px #fff6c0,0 0 26px rgba(255,246,192,.7);background:rgba(255,246,192,.1)}
+.hbox .cards{gap:6px}.hbox .card{margin-left:0}
+.hbox .card.side3{transform:rotate(90deg);margin:0 calc(var(--cw)*.2)}
+.betrow{display:grid;grid-template-columns:1fr 1.5fr 1.1fr 1.5fr 1fr;gap:10px;align-items:stretch}
+.bspot{border-radius:16px;min-height:120px;display:flex;flex-direction:column;justify-content:flex-start;padding-top:10px;gap:2px}
+.bspot b{font-size:15px;letter-spacing:.2em}.bspot small{font-size:10.5px;letter-spacing:.12em;opacity:.85}
+.bspot.player{background:rgba(70,120,255,.14)}.bspot.banker{background:rgba(255,60,90,.14)}.bspot.tie{background:rgba(60,200,120,.14)}
+.bspot .stk{top:auto;bottom:6px;height:66px}
+.road{display:grid;grid-template-rows:repeat(6,22px);grid-auto-flow:column;grid-auto-columns:22px;gap:3px;overflow-x:auto;padding-bottom:4px}
+.road i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;color:#fff;position:relative}
+.road i.P{background:#2f6fe0}.road i.B{background:#d8263f}.road i.T{background:#1f9d55}
+.road i.pp:before,.road i.bp:after{content:"";position:absolute;width:6px;height:6px;border-radius:50%;border:1px solid #fff}
+.road i.pp:before{left:-1px;bottom:-1px;background:#2f6fe0}.road i.bp:after{right:-1px;top:-1px;background:#d8263f}
+.tally{display:flex;gap:12px;font-size:12.5px;margin-top:8px;color:#e6d9de}.tally b{color:#fff}
+.small{font-size:12px;color:#cdb9c2;margin-top:6px}
+</style>
+</head>
+<body>
+<main class="cc-main">
+  <div class="g-grid">
+    <div class="left"><section class="rail"><div class="felt" id="felt">
+      <div class="hands2">
+        <div class="hbox p" id="pBox"><h4>Player</h4><div class="cards" id="pCards"></div><span class="tag" id="pTot" hidden></span></div>
+        <div class="hbox b" id="bBox"><h4>Banker</h4><div class="cards" id="bCards"></div><span class="tag" id="bTot" hidden></span></div>
+      </div>
+      <div class="felt-print big">Banker pays 19 to 20 · Tie pays 8 to 1 · Pairs pay 11 to 1</div>
+      <div class="betrow">
+        <div class="spot bspot" data-bet="ppair"><b>P Pair</b><small>11 to 1</small><div class="stk"></div></div>
+        <div class="spot bspot player" data-bet="player"><b>Player</b><small>1 to 1</small><div class="stk"></div></div>
+        <div class="spot bspot tie" data-bet="tie"><b>Tie</b><small>8 to 1</small><div class="stk"></div></div>
+        <div class="spot bspot banker" data-bet="banker"><b>Banker</b><small>0.95 to 1</small><div class="stk"></div></div>
+        <div class="spot bspot" data-bet="bpair"><b>B Pair</b><small>11 to 1</small><div class="stk"></div></div>
+      </div>
+    </div></section>
+    <div class="rack" id="rack"><div class="actions">
+      <button class="btn" id="undoBtn">Undo</button><button class="btn" id="clearBtn">Clear</button><button class="btn gold" id="dealBtn">Deal</button>
+    </div></div></div>
+    <aside class="side">
+      <div class="panel"><h3>Bead road</h3><div class="road" id="road"></div><div class="tally" id="tally"></div><div class="small" id="shoeTxt"></div></div>
+      <details class="panel" open><summary><h3>Rules &amp; house edge</h3></summary><div class="rules"><ul>
+        <li>8 decks · cut card 14 from the end · standard burn</li><li>Closest to 9 wins; tens and faces count 0</li>
+        <li>Standard drawing tableau (naturals 8/9 stand)</li></ul>
+        <table class="paytable"><tr><th>Bet</th><th class="r">Pays</th><th class="r">Edge</th></tr>
+        <tr><td>Banker</td><td class="r">0.95:1</td><td class="r">1.06%</td></tr><tr><td>Player</td><td class="r">1:1</td><td class="r">1.24%</td></tr>
+        <tr><td>Tie</td><td class="r">8:1</td><td class="r">14.36%</td></tr><tr><td>Player / Banker Pair</td><td class="r">11:1</td><td class="r">10.36%</td></tr></table>
+        <div class="small">Limits: Player/Banker $5–$5,000 · Tie & Pairs $1–$1,000. Player and Banker bets push on a tie.</div></div></details>
+    </aside>
+  </div>
+</main>
+<script src="cc-core.js?v=2"></script>
+<script src="bac-rules.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+const {$, $$, fmt, fmtC, Bank, LB, LBUI, UI, Snd, Voice, RNG, LS, cardHTML, stackSVG, wait, Bets} = CC;
+CC.boot({game:'Baccarat'});
+Object.assign(Voice.lines, { P:[['Player wins.']], B:[['Banker wins.']], T:[['Tie!']], natural:[['A natural!']], pair:[['Pair!']] });
+const NAMES = {player:'Player', banker:'Banker', tie:'Tie', ppair:'Player Pair', bpair:'Banker Pair'};
+const shoe = new BAC.Shoe(n => RNG.int(n));
+let busy = false, shown = {}, road = LS.get('bac.road', []); if (!Array.isArray(road)) road = [];
+const bets = new Bets({limits: BAC.LIMITS, key:'bac.last', names: NAMES, onChange: paint});
+const rack = UI.chipRack($('#rack'));
+function paint(){
+  $$('[data-bet]').forEach(s => { s.querySelector('.stk').innerHTML = stackSVG(bets.get(s.dataset.bet) || shown[s.dataset.bet] || 0); s.classList.toggle('locked', busy); });
+  const d = $('#dealBtn'); d.disabled = busy || (!bets.total && !bets.canRebet()); d.textContent = !bets.total && bets.canRebet() ? `Rebet & Deal` : 'Deal';
+  $('#undoBtn').disabled = busy || !bets.log.length; $('#clearBtn').disabled = busy || !bets.total;
+}
+function roadUI(){
+  $('#road').innerHTML = road.slice(-72).map(r => `<i class="${r[0]}${r.includes('p') ? ' pp' : ''}${r.includes('b') ? ' bp' : ''}">${r[0]}</i>`).join('');
+  const n = k => road.filter(r => r[0] === k).length;
+  $('#tally').innerHTML = `Player <b>${n('P')}</b> · Banker <b>${n('B')}</b> · Tie <b>${n('T')}</b>`;
+  $('#shoeTxt').textContent = `${shoe.remaining} cards left in the 8-deck shoe` + (shoe.needsShuffle() ? ' · new shoe next hand' : '');
+  const r = $('#road'); r.scrollLeft = r.scrollWidth;
+}
+function clearCards(){ $('#pCards').innerHTML = ''; $('#bCards').innerHTML = ''; $('#pTot').hidden = $('#bTot').hidden = true; $('#pBox').classList.remove('won'); $('#bBox').classList.remove('won'); $$('[data-bet]').forEach(s => s.classList.remove('win')); if (Object.keys(shown).length){ shown = {}; paint(); } }
+async function show(box, c, i){ const el = document.createElement('div'); el.innerHTML = cardHTML(c, {cls: i === 2 ? 'side3' : ''}); $(box).appendChild(el.firstChild); Snd.card(); }
+async function deal(){
+  if (busy) return;
+  if (!bets.total) bets.rebet();
+  if (!bets.total){ UI.flash('Place a bet on Player, Banker or Tie', 'warn'); return; }
+  const bad = bets.invalid(); if (bad){ UI.flash(bad, 'warn'); return; }
+  busy = true; clearCards(); paint();
+  if (shoe.needsShuffle()){ UI.flash('New shoe — shuffling 8 decks…'); Snd.shuffle(); shoe.shuffle(); await wait(1100); UI.flash(`Burn card ${CC.RANKS[BAC.rank(shoe.burnCard)]} — burning ${shoe.burned}`); await wait(900); }
+  const stake = bets.commit(); paint();
+  const r = BAC.play(() => shoe.draw());
+  UI.flash('No more bets');
+  const seq = [['#pCards', r.player[0], 0], ['#bCards', r.banker[0], 0], ['#pCards', r.player[1], 1], ['#bCards', r.banker[1], 1]];
+  for (const [b, c, i] of seq){ await show(b, c, i); await wait(380); }
+  const p2 = BAC.total(r.player.slice(0, 2)), b2 = BAC.total(r.banker.slice(0, 2));
+  $('#pTot').hidden = $('#bTot').hidden = false; $('#pTot').textContent = p2; $('#bTot').textContent = b2;
+  if (r.natural){ Voice.line('natural'); await wait(600); }
+  if (r.player[2] !== undefined){ await wait(500); await show('#pCards', r.player[2], 2); $('#pTot').textContent = r.pTot; await wait(450); }
+  if (r.banker[2] !== undefined){ await wait(500); await show('#bCards', r.banker[2], 2); $('#bTot').textContent = r.bTot; await wait(450); }
+  const s = BAC.settle(stake, r);
+  Bank.add(s.returned); LB.record(s.wagered, s.returned);
+  if (r.winner !== 'T') $(r.winner === 'P' ? '#pBox' : '#bBox').classList.add('won');
+  for (const k in s.per) if (s.per[k] > 0){ shown[k] = Math.floor(s.per[k]); if (s.per[k] > stake[k]) $(`[data-bet="${k}"]`).classList.add('win'); }
+  road.push(r.winner + (r.pPair ? 'p' : '') + (r.bPair ? 'b' : '')); road = road.slice(-200); LS.set('bac.road', road); roadUI();
+  const net = Math.round((s.returned - s.wagered) * 100) / 100, who = {P:'Player', B:'Banker', T:'Tie'}[r.winner];
+  const head = r.winner === 'T' ? `Tie ${r.pTot}–${r.bTot}` : `${who} wins ${Math.max(r.pTot, r.bTot)} over ${Math.min(r.pTot, r.bTot)}`;
+  Voice.line(r.winner);
+  if (net > 0){ UI.flash(`${head} — you win ${fmtC(net)}`, 'win'); Snd.chips(4); Snd.win(net >= s.wagered * 5); }
+  else if (net === 0){ UI.flash(`${head} — push`); }
+  else { UI.flash(`${head} — ${s.returned > 0 ? 'you get back ' + fmtC(s.returned) : 'the house wins'}`); Snd.lose(); }
+  busy = false; paint();
+  if (Bank.value < 1){ await wait(1500); Bank.refill(); paint(); }
+}
+$$('[data-bet]').forEach(s => s.addEventListener('click', () => { if (busy) return; clearCards(); bets.add(s.dataset.bet, rack.value); }));
+$('#undoBtn').onclick = () => bets.undo(); $('#clearBtn').onclick = () => bets.clear(); $('#dealBtn').onclick = deal;
+document.addEventListener('keydown', e => { if (LBUI.isOpen || e.metaKey || e.ctrlKey || /input/i.test(e.target.tagName)) return;
+  if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); deal(); } else if (e.key === 'Backspace'){ e.preventDefault(); bets.undo(); } });
+paint(); roadUI(); UI.flash('Place your bets — Player, Banker or Tie');
+window.__bac = { bets, shoe, deal, get busy(){ return busy; } };
+})();
+</script>
+</body>
+</html>

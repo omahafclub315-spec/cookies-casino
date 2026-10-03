@@ -8,6 +8,7 @@ const SVGNS = 'http://www.w3.org/2000/svg', TAU = Math.PI * 2;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const fmt = n => (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
+const fmtC = n => { const a = Math.round(Math.abs(n) * 100) / 100; return (n < 0 ? '-' : '') + '$' + (Number.isInteger(a) ? a.toLocaleString('en-US') : a.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})); };
 const fmtShort = n => n < 1000 ? '$' + n : '$' + (n/1000).toFixed(1).replace(/\.0$/, '') + 'K';
 const fmtPnl = n => (n > 0 ? '+' : n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
 const pnlCls = n => n > 0 ? 'up' : n < 0 ? 'down' : '';
@@ -80,8 +81,9 @@ const LB = {
   notePeak(){ const b = Math.floor(Bank.value); if (b > this.peak){ this.peak = b; this.save(); } UI.meters(); },
   // one finished round/hand/roll: total staked on bets that resolved, and total paid back (stake + winnings). Call AFTER crediting the bankroll.
   record(wagered, returned){
-    wagered = Math.max(0, Math.round(wagered)); returned = Math.max(0, Math.round(returned));
-    this.spins++; this.wagered += wagered; this.net += returned - wagered; this.save(); this.notePeak(); this.schedule();
+    const c = v => Math.round(Math.max(0, v) * 100) / 100;      // keep cents locally (baccarat commission, 7:6 place bets); server gets whole dollars
+    wagered = c(wagered); returned = c(returned);
+    this.spins++; this.wagered = c(this.wagered + wagered); this.net = Math.round((this.net + returned - wagered) * 100) / 100; this.save(); this.notePeak(); this.schedule();
   },
   schedule(delay = 1500){ if (!this.nick || (this.spins <= this.sentSpins && this.peak <= this.sentPeak)) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.submit(), delay); },
   async submit(nick){
@@ -90,7 +92,7 @@ const LB = {
     this.busy = true;
     try {
       const res = await this.rpc('submit_stats', {p_player_id:this.id, p_secret:this.secret, p_nickname:useNick,
-        p_net:Math.round(this.net), p_wagered:Math.round(this.wagered), p_spins:this.spins, p_peak:Math.floor(this.peak)});
+        p_net:Math.round(this.net), p_wagered:Math.ceil(this.wagered - 1e-9), p_spins:this.spins, p_peak:Math.floor(this.peak)});
       if (res && res.ok){ this.nick = res.nickname; this.sentSpins = +res.spins; this.sentPeak = Math.max(this.sentPeak, +res.peak || 0);
         this.rank = res.rank; this.rankPeak = res.rank_peak; this.retry = 0; this.save(); UI.meters(); }
       else if (res && res.error === 'stale' && +res.spins > this.spins){
@@ -291,7 +293,7 @@ const UI = {
   flashT: null,
   flash(msg, kind = 'info'){ const s = $('#ccStatus'); if (!s) return; s.textContent = msg; s.className = 'status' + (kind === 'warn' ? ' warn' : kind === 'win' ? ' win' : ''); },
   meters(){
-    const b = $('#ccBank'); if (b) b.textContent = fmt(Bank.value);
+    const b = $('#ccBank'); if (b) b.textContent = fmtC(Bank.value);
     const p = $('#ccPnl'); if (p){ p.textContent = fmtPnl(LB.net); p.className = 'v ' + pnlCls(LB.net); }
     const r = $('#ccRank'); if (r) r.textContent = LB.nick ? (LB.rank ? '#' + LB.rank : '—') : 'Join';
   },
@@ -392,8 +394,32 @@ const LBUI = {
   }
 };
 
+/* ---------- generic bet board: chips placed on named spots before a round (deducted from the bankroll immediately) ---------- */
+class Bets {
+  constructor({limits, tableMax = Infinity, key = null, onChange = () => {}, names = {}}){
+    this.b = {}; this.log = []; this.limits = limits; this.tableMax = tableMax; this.onChange = onChange; this.names = names;
+    this.lastKey = key; this.last = key ? LS.get(key, null) : null; Bank.uncommitted = () => this.total;
+  }
+  get total(){ return Object.values(this.b).reduce((a, v) => a + v, 0); }
+  get(k){ return this.b[k] || 0; }
+  add(k, v, {quiet = false} = {}){
+    const lim = this.limits[k] || [1, Infinity], cur = this.get(k), nm = this.names[k] || k;
+    if (cur + v > lim[1]){ if (!quiet) UI.flash(`Maximum on ${nm} is ${fmt(lim[1])}`, 'warn'); return false; }
+    if (this.total + v > this.tableMax){ if (!quiet) UI.flash(`Table maximum is ${fmt(this.tableMax)} per round`, 'warn'); return false; }
+    if (v > Bank.value + 1e-9){ if (!quiet) UI.flash('Not enough chips for that cookie — pick a smaller one', 'warn'); return false; }
+    Bank.take(v); this.b[k] = cur + v; this.log.push([k, v]); Bank.save(); if (!quiet) Snd.chip(); this.onChange(); return true;
+  }
+  undo(){ const x = this.log.pop(); if (!x) return; const [k, v] = x; this.b[k] -= v; if (this.b[k] <= 0) delete this.b[k]; Bank.add(v); Snd.chip(.6); this.onChange(); }
+  remove(k){ const v = this.get(k); if (!v) return; delete this.b[k]; this.log = this.log.filter(x => x[0] !== k); Bank.add(v); Snd.chip(.6); this.onChange(); }
+  clear(){ const t = this.total; if (!t) return; this.b = {}; this.log = []; Bank.add(t); Snd.chips(2); this.onChange(); }
+  invalid(){ for (const k in this.b){ const lim = this.limits[k] || [1]; if (this.b[k] < lim[0]) return `Minimum on ${this.names[k] || k} is ${fmt(lim[0])}`; } return null; }
+  canRebet(){ if (!this.last || this.total) return false; const t = Object.values(this.last).reduce((a, v) => a + v, 0); return t > 0 && t <= Bank.value + 1e-9; }
+  rebet(){ if (!this.canRebet()) return false; for (const k in this.last) this.add(k, this.last[k], {quiet:true}); Snd.chips(3); return true; }
+  commit(){ const s = Object.assign({}, this.b); this.last = s; if (this.lastKey) LS.set(this.lastKey, s); this.b = {}; this.log = []; Bank.save(); return s; }
+}
+
 function boot(opts){ buildChipDefs(); UI.header(opts); LB.schedule(2500); }
 
-window.CC = { $, $$, el, clamp, wait, fmt, fmtShort, fmtPnl, pnlCls, esc, LS, RNG, Bank, LB, LBUI, UI, Snd, Voice, START_BANK, DENOMS, COOKIE,
-  chipSVG, stackSVG, breakdown, cardHTML, cardName, cRank, cSuit, SUITS, RANKS, boot, get muted(){ return muted; }, get voiceOn(){ return voiceOn; } };
+window.CC = { $, $$, el, clamp, wait, fmt, fmtC, fmtShort, fmtPnl, pnlCls, esc, LS, RNG, Bank, LB, LBUI, UI, Snd, Voice, START_BANK, DENOMS, COOKIE,
+  chipSVG, stackSVG, breakdown, Bets, cardHTML, cardName, cRank, cSuit, SUITS, RANKS, boot, get muted(){ return muted; }, get voiceOn(){ return voiceOn; } };
 })();
