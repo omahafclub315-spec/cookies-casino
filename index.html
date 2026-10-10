@@ -216,7 +216,7 @@ details.panel>summary h3{display:flex;justify-content:space-between;margin:0}det
       <div class="chips" id="chips"></div>
       <div class="actions">
         <button class="btn" id="undoBtn">Undo</button><button class="btn" id="clearBtn">Clear</button><button class="btn" id="rebetBtn">Rebet</button>
-        <button class="btn" id="doubleBtn">Double</button><button class="btn" id="removeBtn" title="Remove mode: tap a bet to take it back (or long-press any bet)">Remove</button><button class="btn" id="buyBtn" title="Reset bankroll to $300">Buy-in</button>
+        <button class="btn" id="doubleBtn">Double</button><button class="btn" id="removeBtn" title="Remove mode: tap a bet to take it back (or long-press any bet)">Remove</button><button class="btn" id="buyBtn" title="Reset bankroll to $1,000">Buy-in</button>
         <button class="btn spin" id="spinBtn">Spin</button>
       </div>
     </div>
@@ -292,7 +292,7 @@ const COOKIE = {   // cookie chips: dough type + icing-ring colour identify the 
 
 /* ---------------- State ---------------- */
 let type = LS.get('type','american'); if (!ORDER[type]) type = 'american';
-const START_BANK = 300;
+const START_BANK = 1000;
 const LB_SEASON = 2;   // leaderboard season: bumping it wipes the local identity/stats and resets the bankroll once (server board was reset too)
 if ((+LS.get('lb.season', 0) || 0) < LB_SEASON){
   ['id','secret','nick','peak','spins','sentPeak','sentSpins','rank','rankPeak','asked','net','wagered'].forEach(k => { try { localStorage.removeItem('cc.lb.' + k); } catch(e){} });
@@ -976,7 +976,7 @@ async function resolveRound(n){
   else flash(`${name}${colName} — place your bets`, 'info');
   updateMeters(); saveBank(); updateButtons();
   LB.afterSpin(wagered, ret);
-  if (bankroll < 1){ await wait(1800); bankroll = START_BANK; updateMeters(); saveBank(); Snd.chips(5); flash('Out of chips — here\'s a fresh $300 on the house 🍪', 'win'); Voice.line('refill'); updateButtons(); }
+  if (bankroll < 1){ await wait(1800); bankroll = START_BANK; updateMeters(); saveBank(); Snd.chips(5); flash('Out of chips — here\'s a fresh $1,000 on the house 🍪', 'win'); Voice.line('refill'); updateButtons(); }
 }
 /* ================= UI: meters, board, buttons, placard ================= */
 let bankAnim = null;
@@ -1045,8 +1045,8 @@ function wireButtons(){
     if (need > bankroll){ flash(`Rebet needs ${fmt(need)} — bankroll is ${fmt(bankroll)}`, 'warn'); return; }
     const op = []; for (const [id, amt] of lastBets){ if (!SPOTMAP[id]) continue; const a = placeBet(id, amt, {record:false, silent:true}); if (a) op.push({id, amt:a}); }
     undoStack.push(op); Snd.chips(3); flash(`Rebet — ${fmt(tableTotal())} on the table`); updateButtons(); };
-  $('#buyBtn').onclick = () => { if (phase !== 'betting') return; if (!confirm('Reset your bankroll to $300? Chips on the table are returned first. Your leaderboard P&L and highest bankroll are kept.')) return;
-    for (const [id, amt] of [...bets]) removeBet(id, amt); undoStack = []; bankroll = START_BANK; shownBank = 0; updateMeters(); saveBank(); Snd.chips(5); flash('Buy-in: $300 in chips'); updateButtons(); };
+  $('#buyBtn').onclick = () => { if (phase !== 'betting') return; if (!confirm('Reset your bankroll to $1,000? Chips on the table are returned first. Your leaderboard P&L and highest bankroll are kept.')) return;
+    for (const [id, amt] of [...bets]) removeBet(id, amt); undoStack = []; bankroll = START_BANK; shownBank = 0; updateMeters(); saveBank(); Snd.chips(5); flash('Buy-in: $1,000 in chips'); updateButtons(); };
   document.querySelectorAll('#typeSeg button').forEach(b => b.onclick = () => { if (phase !== 'betting' || bets.size || b.dataset.type === type) return;
     type = b.dataset.type; LS.set('type', type); clearResultMarkers(); lastBets = new Map(); undoStack = [];
     buildSpots(); buildTable(); buildHead(); ball.rel = -Math.PI/2; ball.rad = RAD.rest; renderBoard(); renderPlacard(); updateButtons();
@@ -1111,7 +1111,7 @@ const LB = {
     this.busy = true;
     try {
       const res = await this.rpc('submit_stats', {p_player_id:this.id, p_secret:this.secret, p_nickname:useNick,
-        p_net:Math.round(this.net), p_wagered:Math.round(this.wagered), p_spins:this.spins, p_peak:Math.floor(this.peak)});
+        p_net:Math.round(this.net), p_wagered:Math.round(this.wagered), p_spins:this.spins, p_peak:Math.floor(Math.min(this.peak, 300 + 1000 * Math.round(this.wagered)))})   // server cap: peak <= 300 + 1000x wagered (keeps a fresh $1,000 player from being rejected before their first bet);
       if (res && res.ok){ this.nick = res.nickname; this.sentSpins = +res.spins; this.sentPeak = Math.max(this.sentPeak, +res.peak || 0);
         this.rank = res.rank; this.rankPeak = res.rank_peak; this.retry = 0; this.save(); renderLBPanel(); }
       else if (res && res.error === 'stale' && +res.spins > this.spins){   // another tab/device with this identity is ahead: adopt the server's totals

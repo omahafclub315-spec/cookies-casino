@@ -35,13 +35,13 @@
     <section class="games" id="games"></section>
     <aside class="side">
       <div class="panel"><h3>Your cookies</h3><div class="stats" id="stats"></div>
-        <button class="btn pink" id="lbBtn">🏆 Leaderboard</button><button class="btn" id="buyBtn">Buy-in: reset bankroll to $300</button></div>
+        <button class="btn pink" id="lbBtn">🏆 Leaderboard</button><button class="btn" id="buyBtn">Buy-in: reset bankroll to $1,000</button></div>
       <div class="panel welcome"><h3>How it works</h3>One bankroll is shared by every game. Your lifetime profit &amp; loss, total rounds and highest bankroll count toward the online leaderboard, whichever table you play.
-        Run out of chips and the house bakes you a fresh $300. All shuffles, spins and rolls use your device's cryptographic random generator.</div>
+        Run out of chips and the house bakes you a fresh $1,000. All shuffles, spins and rolls use your device's cryptographic random generator.</div>
     </aside>
   </div>
 </main>
-<script src="cc-core.js?v=3"></script>
+<script src="cc-core.js?v=4"></script>
 <script>
 (function(){
 const {$, fmt, fmtPnl, pnlCls, Bank, LB, LBUI, UI, LS, START_BANK} = CC;
@@ -64,7 +64,7 @@ function stats(){
 }
 stats(); setInterval(stats, 3000);
 $('#lbBtn').onclick = () => LBUI.open();
-$('#buyBtn').onclick = () => { if (!confirm('Reset your bankroll to $300? Your leaderboard P&L and highest bankroll are kept.')) return; Bank.set(START_BANK); CC.Snd.chips(5); UI.flash('Buy-in: $300 in chips'); stats(); };
+$('#buyBtn').onclick = () => { if (!confirm('Reset your bankroll to $1,000? Your leaderboard P&L and highest bankroll are kept.')) return; Bank.set(START_BANK); CC.Snd.chips(5); UI.flash('Buy-in: $1,000 in chips'); stats(); };
 UI.flash(LB.nick ? `Welcome back, ${LB.nick}! Pick a table` : 'Welcome! Pick a table');
 if (!LB.nick && !LS.get('lb.asked', false)) setTimeout(() => { if (!LBUI.isOpen) LBUI.open(); }, 1200);
 })();

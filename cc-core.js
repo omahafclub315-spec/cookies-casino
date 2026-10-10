@@ -20,7 +20,7 @@ const LS = { get(k, d){ try { const v = localStorage.getItem('cc.' + k); return 
              set(k, v){ try { localStorage.setItem('cc.' + k, JSON.stringify(v)); } catch(e){} } };
 
 /* ---------- season (identical to roulette: only ever runs on a browser's very first visit) ---------- */
-const START_BANK = 300, LB_SEASON = 2;
+const START_BANK = 1000, LB_SEASON = 2;
 if ((+LS.get('lb.season', 0) || 0) < LB_SEASON){
   ['id','secret','nick','peak','spins','sentPeak','sentSpins','rank','rankPeak','asked','net','wagered'].forEach(k => { try { localStorage.removeItem('cc.lb.' + k); } catch(e){} });
   LS.set('bankroll', START_BANK); LS.set('lb.season', LB_SEASON);
@@ -48,7 +48,7 @@ const Bank = {
   set(v){ this.value = Math.round(v * 100) / 100; this.save(); UI.meters(); },
   add(d){ this.set(this.value + d); },
   take(d){ if (d > this.value + 1e-9) return false; this.set(this.value - d); return true; },
-  refill(){ this.set(START_BANK); Snd.chips(5); UI.flash("Out of chips — here's a fresh $300 on the house 🍪", 'win'); Voice.line('refill'); }
+  refill(){ this.set(START_BANK); Snd.chips(5); UI.flash("Out of chips — here's a fresh $1,000 on the house 🍪", 'win'); Voice.line('refill'); }
 };
 
 /* ---------- lifetime stats + leaderboard (Supabase RPC via plain fetch; same protocol as roulette) ---------- */
@@ -92,7 +92,7 @@ const LB = {
     this.busy = true;
     try {
       const res = await this.rpc('submit_stats', {p_player_id:this.id, p_secret:this.secret, p_nickname:useNick,
-        p_net:Math.round(this.net), p_wagered:Math.ceil(this.wagered - 1e-9), p_spins:this.spins, p_peak:Math.floor(this.peak)});
+        p_net:Math.round(this.net), p_wagered:Math.ceil(this.wagered - 1e-9), p_spins:this.spins, p_peak:Math.floor(Math.min(this.peak, 300 + 1000 * Math.ceil(this.wagered - 1e-9)))})   // server cap: peak <= 300 + 1000x wagered (keeps a fresh $1,000 player from being rejected before their first bet);
       if (res && res.ok){ this.nick = res.nickname; this.sentSpins = +res.spins; this.sentPeak = Math.max(this.sentPeak, +res.peak || 0);
         this.rank = res.rank; this.rankPeak = res.rank_peak; this.retry = 0; this.save(); UI.meters(); }
       else if (res && res.error === 'stale' && +res.spins > this.spins){
