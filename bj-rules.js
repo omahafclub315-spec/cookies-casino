@@ -105,6 +105,38 @@ class Round {
     return this;
   }
 }
-const BJ = { RULES, value, cardVal, rank, isPair, Shoe, Round };
+
+/* ---------- basic strategy for THESE rules: 6 decks, S17, DAS, late surrender, peek, split to 4, no resplit aces ----------
+   Columns = dealer upcard 2,3,4,5,6,7,8,9,10,A.  Codes: H hit · S stand · D double else hit · Ds double else stand ·
+   P split · Rh surrender else hit.  Pairs not split fall through to the hard/soft tables. */
+const UP = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const row = s => s.split(' ');
+const STRAT = {
+  hard: { 4:row('H H H H H H H H H H'), 5:row('H H H H H H H H H H'), 6:row('H H H H H H H H H H'), 7:row('H H H H H H H H H H'), 8:row('H H H H H H H H H H'),
+          9:row('H D D D D H H H H H'), 10:row('D D D D D D D D H H'), 11:row('D D D D D D D D D H'), 12:row('H H S S S H H H H H'),
+          13:row('S S S S S H H H H H'), 14:row('S S S S S H H H H H'), 15:row('S S S S S H H H Rh H'), 16:row('S S S S S H H Rh Rh Rh'),
+          17:row('S S S S S S S S S S'), 18:row('S S S S S S S S S S'), 19:row('S S S S S S S S S S'), 20:row('S S S S S S S S S S'), 21:row('S S S S S S S S S S') },
+  soft: { 12:row('H H H H H H H H H H'), 13:row('H H H D D H H H H H'), 14:row('H H H D D H H H H H'), 15:row('H H D D D H H H H H'), 16:row('H H D D D H H H H H'),
+          17:row('H D D D D H H H H H'), 18:row('S Ds Ds Ds Ds S S H H H'), 19:row('S S S S S S S S S S'), 20:row('S S S S S S S S S S'), 21:row('S S S S S S S S S S') },
+  pair: { 2:row('P P P P P P H H H H'), 3:row('P P P P P P H H H H'), 4:row('H H H P P H H H H H'), 5:row('D D D D D D D D H H'),
+          6:row('P P P P P H H H H H'), 7:row('P P P P P P H H H H'), 8:row('P P P P P P P P P P'), 9:row('P P P P P S P P S S'),
+          10:row('S S S S S S S S S S'), 11:row('P P P P P P P P P P') }
+};
+const upIdx = c => { const v = cardVal(c); return UP.indexOf(v === 1 ? 11 : v); };
+// best move for a hand vs the dealer upcard. allowed: {double, split, surrender} (what the player can actually do right now).
+// returns { action: 'hit'|'stand'|'double'|'split'|'surrender', code, ideal } — ideal = the chart move before "not allowed" fallbacks.
+function strategy(cards, upcard, allowed = {}){
+  const i = upIdx(upcard), v = value(cards);
+  let code = null;
+  if (isPair(cards)){ const pv = cardVal(cards[0]) === 1 ? 11 : cardVal(cards[0]); const p = STRAT.pair[pv][i]; if (p === 'P') code = allowed.split ? 'P' : null; }
+  const base = v.soft ? STRAT.soft[v.total][i] : STRAT.hard[Math.max(4, v.total)][i];
+  const ideal = isPair(cards) && STRAT.pair[cardVal(cards[0]) === 1 ? 11 : cardVal(cards[0])][i] === 'P' ? 'P' : base;
+  if (!code) code = base;
+  const action = code === 'P' ? 'split' : code === 'S' ? 'stand' : code === 'H' ? 'hit'
+    : code === 'D' ? (allowed.double ? 'double' : 'hit') : code === 'Ds' ? (allowed.double ? 'double' : 'stand')
+    : code === 'Rh' ? (allowed.surrender ? 'surrender' : 'hit') : 'stand';
+  return { action, code, ideal };
+}
+const BJ = { RULES, value, cardVal, rank, isPair, Shoe, Round, strategy, STRAT, UP };
 if (typeof module !== 'undefined' && module.exports) module.exports = BJ; else root.BJ = BJ;
 })(typeof self !== 'undefined' ? self : this);

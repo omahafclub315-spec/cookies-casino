@@ -31,12 +31,43 @@
 .small{font-size:12px;color:#cdb9c2;margin-top:6px}
 .keys{font-size:12px;color:#cdb9c2;line-height:1.8}.keys kbd{border:1px solid #6b6248;border-radius:4px;padding:0 5px;font-size:11px;color:#efe2bd}
 #acts .play[hidden],#acts .bet[hidden]{display:none}
+
+/* ---- strategy coach ---- */
+.coach-ctl{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:3}
+.coach-ctl .btn{min-height:36px;padding:6px 10px;font-size:11px;letter-spacing:.06em}
+.coach{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:8px;max-width:calc(100% - 24px);
+  padding:7px 14px;border-radius:999px;background:rgba(6,30,18,.82);border:1px solid rgba(124,255,178,.65);color:#eafff2;font-size:13px;letter-spacing:.03em;
+  box-shadow:0 4px 14px rgba(0,0,0,.45);pointer-events:none;white-space:nowrap;transition:opacity .2s}
+.coach[hidden]{display:none}
+.coach b{color:#7cffb2;text-transform:uppercase;letter-spacing:.12em}
+.coach small{color:#bfe9cf;font-size:11.5px;overflow:hidden;text-overflow:ellipsis}
+.coach .acc{color:#9fd8b6;font-size:11px;border-left:1px solid rgba(124,255,178,.35);padding-left:8px}
+.coach-note{position:absolute;left:50%;bottom:54px;transform:translateX(-50%);z-index:3;padding:4px 12px;border-radius:999px;background:rgba(0,0,0,.6);
+  border:1px solid rgba(255,200,120,.5);color:#ffd9a8;font-size:12px;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap}
+.coach-note.show{opacity:1}
+.btn.advise:not(:disabled){border-color:#7cffb2;color:#fff;box-shadow:0 0 0 2px rgba(124,255,178,.9),0 0 16px rgba(124,255,178,.65);animation:advise 1.6s ease-in-out infinite}
+@keyframes advise{50%{box-shadow:0 0 0 2px rgba(124,255,178,.55),0 0 6px rgba(124,255,178,.3)}}
+@media (prefers-reduced-motion:reduce){.btn.advise{animation:none}}
+@media (max-width:600px){.coach small{display:none}}
+#chartModal .sheet{width:min(760px,96vw)}
+.bs-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bs{border-collapse:separate;border-spacing:2px;width:100%;min-width:420px;table-layout:fixed;margin:2px 0 14px;font-size:clamp(11px,1.6vw,13px);font-variant-numeric:tabular-nums}
+.bs caption{text-align:left;font-family:Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#f3dc95;font-size:13px;padding:2px 0 6px}
+.bs th:first-child{width:3.6em}.bs th{color:#efe2bd;font-weight:600;padding:5px 2px;background:rgba(255,255,255,.06);border-radius:4px;white-space:nowrap}
+.bs td{text-align:center;padding:6px 0;border-radius:4px;font-weight:700;color:#14110a}
+.bs .H{background:#e9e4da}.bs .S{background:#f2c84b}.bs .D{background:#5fd18a}.bs .Ds{background:linear-gradient(135deg,#5fd18a 55%,#f2c84b 55%)}
+.bs .P{background:#7fb6ff}.bs .Rh{background:#ff8a80}
+.bs td.cur{outline:3px solid #ff4fa0;outline-offset:-1px;box-shadow:0 0 10px #ff4fa0}
+.bs-legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:#e8d9c8;margin:0 0 12px}
+.bs-legend span{display:inline-flex;align-items:center;gap:5px}.bs-legend i{display:inline-block;width:22px;height:16px;border-radius:3px;font-style:normal;font-weight:700;color:#14110a;text-align:center;font-size:10px;line-height:16px}
 </style>
 </head>
 <body>
 <main class="cc-main">
   <div class="bj-grid">
     <div class="left"><section class="rail"><div class="felt" id="felt">
+      <div class="coach-ctl"><button class="btn" id="hintBtn" aria-pressed="true" title="Show the basic-strategy move (key: T)">💡 Hints on</button><button class="btn" id="chartBtn" title="Basic strategy chart (key: C)">Chart</button></div>
+      <div class="coach-note" id="coachNote" aria-live="polite"></div><div class="coach" id="coach" hidden aria-live="polite"></div>
       <div class="dz"><div class="cards" id="dCards"></div><div class="meta"><span class="tag" id="dTot" hidden></span></div></div>
       <div class="arc"><div class="felt-print big">Blackjack pays 3 to 2</div><div class="felt-print">Dealer stands on all 17s · Insurance pays 2 to 1</div></div>
       <div class="insure" id="insure" hidden><span>Insurance?</span><button class="btn pink" id="insYes">Yes</button><button class="btn" id="insNo">No thanks</button></div>
@@ -54,13 +85,18 @@
         <li>6 decks, reshuffled when the cut card (75%) comes out</li><li>Blackjack pays <b>3:2</b> · wins pay 1:1</li>
         <li>Dealer stands on soft 17 and peeks for blackjack</li><li>Insurance pays <b>2:1</b> (offered on an Ace)</li>
         <li>Double on any two cards, also after splitting</li><li>Split up to 4 hands · split Aces get one card, no resplit</li>
-        <li>Late surrender: give up half your bet</li><li>Table limits $5 – $5,000</li><li>House edge ≈ <b id="edge">0.34%</b> with perfect basic strategy</li></ul></div></details>
-      <div class="panel keys"><h3>Shortcuts</h3><kbd>Space</kbd> deal · <kbd>H</kbd> hit · <kbd>S</kbd> stand · <kbd>D</kbd> double · <kbd>P</kbd> split · <kbd>R</kbd> surrender · <kbd>⌫</kbd> undo</div>
+        <li>Late surrender: give up half your bet</li><li>Table limits $5 – $5,000</li><li>💡 Hints and the Chart use the basic strategy for exactly these rules (6 decks, S17, DAS, late surrender)</li><li>House edge ≈ <b id="edge">0.34%</b> with perfect basic strategy</li></ul></div></details>
+      <div class="panel keys"><h3>Shortcuts</h3><kbd>Space</kbd> deal · <kbd>H</kbd> hit · <kbd>S</kbd> stand · <kbd>D</kbd> double · <kbd>P</kbd> split · <kbd>R</kbd> surrender · <kbd>⌫</kbd> undo · <kbd>T</kbd> hints · <kbd>C</kbd> chart</div>
     </aside>
   </div>
 </main>
+<div class="modal" id="chartModal" hidden role="dialog" aria-modal="true" aria-labelledby="chartTitle"><div class="sheet">
+  <div class="sheet-hd"><h2 id="chartTitle">Basic Strategy</h2><p>6 decks · dealer stands soft 17 · double after split · late surrender</p><button class="x" id="chartClose" aria-label="Close">×</button></div>
+  <div class="sheet-bd" id="chartBody"></div>
+  <div class="sheet-ft">Rows = your hand · columns = dealer's upcard. Never take insurance or even money. Pairs you don't split are played by their total.</div>
+</div></div>
 <script src="cc-core.js?v=4"></script>
-<script src="bj-rules.js?v=1"></script>
+<script src="bj-rules.js?v=2"></script>
 <script>
 (function(){
 'use strict';
@@ -73,6 +109,78 @@ let phase = 'betting', bet = 0, chipLog = [], lastBet = +LS.get('bj.last', 0) ||
 Bank.uncommitted = () => phase === 'betting' ? bet : 0;
 const rack = UI.chipRack($('#rack'));
 const hv = cards => { const v = BJ.value(cards); return v.soft && v.total < 21 ? `${v.total - 10}/${v.total}` : String(v.total); };
+
+
+/* ---------------- strategy coach ---------------- */
+let hintsOn = LS.get('bj.hints', true) !== false, coachStats = {ok: 0, n: 0}, noteT = null;
+const ACT_BTN = {hit:'#hitBtn', stand:'#standBtn', double:'#dblBtn', split:'#splitBtn', surrender:'#surBtn', noins:'#insNo'};
+const ACT_NAME = {hit:'Hit', stand:'Stand', double:'Double', split:'Split', surrender:'Surrender', noins:'No insurance'};
+const CODE_NAME = {H:'hit', S:'stand', D:'double', Ds:'double', P:'split', Rh:'surrender'};
+const upName = c => { const v = BJ.cardVal(c); return v === 1 ? 'A' : String(v); };
+function handName(cards){
+  const v = BJ.value(cards);
+  if (BJ.isPair(cards)){ const p = BJ.cardVal(cards[0]); return `Pair of ${p === 1 ? 'A' : p}s`; }
+  return `${v.soft ? 'Soft' : 'Hard'} ${v.total}`;
+}
+function advice(){                                         // the basic-strategy move for the decision on screen right now, or null
+  if (!round) return null;
+  if (round.phase === 'insurance') return {action:'noins', why:'Insurance always loses in the long run'};
+  if (phase !== 'play' || round.phase !== 'player') return null;
+  const h = round.hand, afford = Bank.value >= h.bet;
+  if (!round.canHit()) return {action:'stand', why:''};
+  const allowed = {double: round.canDouble() && afford, split: round.canSplit() && afford, surrender: round.canSurrender()};
+  const s = BJ.strategy(h.cards, round.upcard, allowed);
+  let why = `${handName(h.cards)} vs ${upName(round.upcard)}`;
+  const want = CODE_NAME[s.ideal];
+  if (want && want !== s.action){
+    const no = want === 'double' ? (round.canDouble() ? "can't afford to double" : "can't double now") : want === 'split' ? (round.canSplit() ? "can't afford to split" : "can't split again")
+      : want === 'surrender' ? "can't surrender now" : '';
+    if (no) why += ` · ${no}, so ${ACT_NAME[s.action].toLowerCase()}`;
+  }
+  return {action: s.action, why};
+}
+function updateCoach(){
+  const el = $('#coach'); $$('#acts .btn.advise, #insure .btn.advise').forEach(b => b.classList.remove('advise'));
+  const a = hintsOn && !busy ? advice() : null;
+  if (!a){ el.hidden = true; return; }
+  const acc = coachStats.n ? `<span class="acc">${coachStats.ok}/${coachStats.n} on strategy</span>` : '';
+  el.innerHTML = `<span>Strategy:</span><b>${ACT_NAME[a.action]}</b>${a.why ? `<small>${a.why}</small>` : ''}${acc}`; el.hidden = false;
+  const b = $(ACT_BTN[a.action]); if (b) b.classList.add('advise');
+}
+function coachJudge(chosen){                               // call BEFORE acting; brief note if the player went off-strategy
+  const a = advice(); if (!a || a.action === 'stand' && !a.why) return;
+  coachStats.n++; if (a.action === chosen){ coachStats.ok++; return; }
+  const n = $('#coachNote'); n.textContent = `Strategy said: ${ACT_NAME[a.action]}${a.why ? ` (${a.why.split(' · ')[0]})` : ''}`;
+  n.classList.add('show'); clearTimeout(noteT); noteT = setTimeout(() => n.classList.remove('show'), 2800);
+}
+function setHints(on){ hintsOn = on; LS.set('bj.hints', on); const b = $('#hintBtn'); b.textContent = on ? '💡 Hints on' : '💡 Hints off';
+  b.setAttribute('aria-pressed', String(on)); b.classList.toggle('on', on); updateCoach(); }
+
+function chartHTML(){
+  const ups = BJ.UP.map(u => u === 11 ? 'A' : u), S = BJ.STRAT;
+  let cur = null;                                            // highlight the cell for the hand on screen
+  if (round && round.phase === 'player' && phase === 'play'){ const h = round.hand, v = BJ.value(h.cards), ui = BJ.UP.indexOf(BJ.cardVal(round.upcard) === 1 ? 11 : BJ.cardVal(round.upcard));
+    if (BJ.isPair(h.cards) && round.canSplit()){ const p = BJ.cardVal(h.cards[0]); cur = ['pair', p === 1 ? 11 : p, ui]; }
+    else if (v.soft && v.total >= 13 && v.total <= 20) cur = ['soft', v.total, ui];
+    else if (!v.soft) cur = ['hard', v.total <= 8 ? 8 : Math.min(v.total, 17), ui]; }
+  const head = `<tr><th>You</th>${ups.map(u => `<th>${u}</th>`).join('')}</tr>`;
+  const tbl = (cap, kind, rows) => `<div class="bs-wrap"><table class="bs"><caption>${cap}</caption><thead>${head}</thead><tbody>${rows.map(([label, key]) =>
+    `<tr><th>${label}</th>${S[kind][key === 8 && kind === 'hard' ? 8 : key].map((c, i) => `<td class="${c}${cur && cur[0] === kind && cur[1] === key && cur[2] === i ? ' cur' : ''}">${c === 'Rh' ? 'R' : c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const hard = [[ '5–8', 8 ], ...[9,10,11,12,13,14,15,16].map(t => [String(t), t]), ['17+', 17]];
+  const soft = [13,14,15,16,17,18,19,20].map(t => [`A,${t - 11}`, t]);
+  const pairs = [2,3,4,5,6,7,8,9,10,11].map(p => [p === 11 ? 'A,A' : p === 10 ? '10,10' : `${p},${p}`, p]);
+  const lg = [['H','H','Hit'],['S','S','Stand'],['D','D','Double, else hit'],['Ds','Ds','Double, else stand'],['P','P','Split'],['Rh','R','Surrender, else hit']];
+  const col = {H:'#e9e4da', S:'#f2c84b', D:'#5fd18a', Ds:'linear-gradient(135deg,#5fd18a 55%,#f2c84b 55%)', P:'#7fb6ff', Rh:'#ff8a80'};
+  return `<div class="bs-legend">${lg.map(([c, t, d]) => `<span><i style="background:${col[c]}">${t}</i>${d}</span>`).join('')}</div>`
+    + tbl('Hard totals', 'hard', hard) + tbl('Soft totals (Ace counted as 11)', 'soft', soft) + tbl('Pairs', 'pair', pairs);
+}
+const chart = {
+  get isOpen(){ return !$('#chartModal').hidden; },
+  open(){ $('#chartBody').innerHTML = chartHTML(); const m = $('#chartModal'); m.hidden = false; requestAnimationFrame(() => m.classList.add('show')); $('#chartClose').focus(); },
+  close(){ const m = $('#chartModal'); m.classList.remove('show'); setTimeout(() => { m.hidden = true; }, 200); }
+};
+$('#hintBtn').onclick = () => setHints(!hintsOn); $('#chartBtn').onclick = () => chart.open();
+$('#chartClose').onclick = () => chart.close(); $('#chartModal').addEventListener('click', e => { if (e.target.id === 'chartModal') chart.close(); });
 
 function renderBet(){ $('#betStk').innerHTML = stackSVG(bet); $('#betSpot').classList.toggle('has', bet > 0); buttons(); }
 function placeChip(v){
@@ -124,6 +232,7 @@ function buttons(){
     $('#hitBtn').disabled = busy || !round.canHit(); $('#standBtn').disabled = busy || !round.canStand();
     $('#dblBtn').disabled = busy || !round.canDouble() || !afford; $('#splitBtn').disabled = busy || !round.canSplit() || !afford; $('#surBtn').disabled = busy || !round.canSurrender(); }
   $('#betSpot').classList.toggle('locked', phase !== 'betting'); $('#betZone').style.visibility = phase === 'betting' ? 'visible' : 'hidden';
+  updateCoach();
 }
 
 async function deal(){
@@ -149,7 +258,7 @@ async function afterAction(){
 }
 async function insurance(take){
   if (!round || round.phase !== 'insurance') return;
-  $('#insure').hidden = true; busy = true;
+  coachJudge(take ? 'ins' : 'noins'); $('#insure').hidden = true; busy = true; updateCoach();
   if (take){ if (!Bank.take(round.baseBet / 2)) take = false; else Snd.chips(2); }
   round.decideInsurance(take);
   if (round.phase !== 'done' && round.peeked){ UI.flash('Dealer checks for blackjack… no blackjack'); await wait(700); }
@@ -158,6 +267,9 @@ async function insurance(take){
 async function act(name){
   if (busy || !round || round.phase !== 'player') return;
   const h = round.hand;
+  if (!round['can' + name[0].toUpperCase() + name.slice(1)]()) return;
+  if ((name === 'double' || name === 'split') && Bank.value < h.bet){ UI.flash('Not enough chips to ' + name, 'warn'); return; }
+  coachJudge(name);
   if ((name === 'double' || name === 'split') && !Bank.take(h.bet)){ UI.flash('Not enough chips to ' + name, 'warn'); return; }
   busy = true; buttons(); if (name === 'double' || name === 'split') Snd.chips(2);
   round[name]();
@@ -187,16 +299,18 @@ $('#hitBtn').onclick = () => act('hit'); $('#standBtn').onclick = () => act('sta
 $('#splitBtn').onclick = () => act('split'); $('#surBtn').onclick = () => act('surrender');
 $('#insYes').onclick = () => insurance(true); $('#insNo').onclick = () => insurance(false);
 document.addEventListener('keydown', e => {
+  if (chart.isOpen){ if (e.key === 'Escape' || e.key.toLowerCase() === 'c') chart.close(); return; }
   if (LBUI.isOpen || e.metaKey || e.ctrlKey || e.altKey || /input|textarea/i.test(e.target.tagName)) return;
   const k = e.key.toLowerCase();
   if (k === ' ' || k === 'enter'){ e.preventDefault(); if (phase === 'betting') deal(); else if (round && round.phase === 'player') act('stand'); }
   else if (k === 'h') act('hit'); else if (k === 's') act('stand'); else if (k === 'd' && !$('#dblBtn').disabled) act('double');
   else if (k === 'p' && !$('#splitBtn').disabled) act('split'); else if (k === 'r' && !$('#surBtn').disabled) act('surrender');
+  else if (k === 't') setHints(!hintsOn); else if (k === 'c') chart.open();
   else if (k === 'backspace' && phase === 'betting'){ e.preventDefault(); undo(); }
   else if (k === 'y' && round && round.phase === 'insurance') insurance(true); else if (k === 'n' && round && round.phase === 'insurance') insurance(false);
 });
-renderBet(); shoeUI(); buttons(); UI.flash('Place your bet — tap the circle');
-window.__bj = { get round(){ return round; }, get phase(){ return phase; }, get bet(){ return bet; }, shoe, placeChip, deal, act, insurance };
+setHints(hintsOn); renderBet(); shoeUI(); buttons(); UI.flash('Place your bet — tap the circle');
+window.__bj = { get round(){ return round; }, get phase(){ return phase; }, get bet(){ return bet; }, shoe, placeChip, deal, act, insurance, advice, chart, setHints };
 })();
 </script>
 </body>
