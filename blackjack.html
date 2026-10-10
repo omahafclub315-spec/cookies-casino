@@ -35,20 +35,30 @@
 /* ---- strategy coach ---- */
 .coach-ctl{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:3}
 .coach-ctl .btn{min-height:36px;padding:6px 10px;font-size:11px;letter-spacing:.06em}
-.coach{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:8px;max-width:calc(100% - 24px);
-  padding:7px 14px;border-radius:999px;background:rgba(6,30,18,.82);border:1px solid rgba(124,255,178,.65);color:#eafff2;font-size:13px;letter-spacing:.03em;
-  box-shadow:0 4px 14px rgba(0,0,0,.45);pointer-events:none;white-space:nowrap;transition:opacity .2s}
-.coach[hidden]{display:none}
-.coach b{color:#7cffb2;text-transform:uppercase;letter-spacing:.12em}
-.coach small{color:#bfe9cf;font-size:11.5px;overflow:hidden;text-overflow:ellipsis}
-.coach .acc{color:#9fd8b6;font-size:11px;border-left:1px solid rgba(124,255,178,.35);padding-left:8px}
 .coach-note{position:absolute;left:50%;bottom:54px;transform:translateX(-50%);z-index:3;padding:4px 12px;border-radius:999px;background:rgba(0,0,0,.6);
   border:1px solid rgba(255,200,120,.5);color:#ffd9a8;font-size:12px;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap}
 .coach-note.show{opacity:1}
 .btn.advise:not(:disabled){border-color:#7cffb2;color:#fff;box-shadow:0 0 0 2px rgba(124,255,178,.9),0 0 16px rgba(124,255,178,.65);animation:advise 1.6s ease-in-out infinite}
+.bs-card{position:absolute;top:10px;right:10px;z-index:3;width:clamp(206px,27%,236px);box-sizing:border-box;padding:9px 12px 10px;border-radius:14px;
+  background:linear-gradient(160deg,#fffaf0,#f6ead2);color:#3a1426;border:2px solid #f3dc95;box-shadow:0 0 0 3px #c2185b,0 10px 24px rgba(0,0,0,.45);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;text-align:center;transition:opacity .2s}
+.bs-card[hidden]{display:none}
+.bs-card:before,.bs-card:after{content:"🍪";position:absolute;top:7px;font-size:12px;line-height:1}.bs-card:before{left:8px}.bs-card:after{right:8px}
+.bs-card .k{font-family:Georgia,serif;font-size:10.5px;letter-spacing:.16em;padding:0 14px;text-transform:uppercase;color:#a8245e}
+.bs-card .act{margin:4px 0 2px;font-family:Didot,"Bodoni 72","Playfair Display",Georgia,serif;font-weight:700;font-size:clamp(22px,2.7vw,28px);line-height:1.1;letter-spacing:.03em;white-space:nowrap;text-transform:uppercase;
+  padding:4px 6px;border-radius:9px;color:#14110a;background:#e9e4da}
+.bs-card .act.hit{background:#e9e4da}.bs-card .act.stand{background:#f2c84b}.bs-card .act.double{background:#5fd18a}.bs-card .act.split{background:#7fb6ff}
+.bs-card .act.surrender,.bs-card .act.noins{font-size:clamp(19px,2.3vw,23px)}.bs-card .act.surrender,.bs-card .act.noins{background:#ff8a80}.bs-card .act.idle{background:none;color:#7a4a5e;font-size:15px;font-family:inherit;font-weight:600;letter-spacing:.02em;text-transform:none;padding:8px 2px}
+.bs-card .hd{font-size:14px;font-weight:700;margin-top:3px}.bs-card .why{font-size:12px;color:#8a3a5c;margin-top:2px;line-height:1.3}
+.bs-card .row{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin-top:7px;font-size:9.5px;font-weight:700}
+.bs-card .row span{display:block;border-radius:3px;padding:1px 0;color:#14110a}.bs-card .row b{display:block;font-size:9px;color:#7a4a5e;font-weight:600}
+.bs-card .row .H{background:#e9e4da}.bs-card .row .S{background:#f2c84b}.bs-card .row .D{background:#5fd18a}.bs-card .row .Ds{background:linear-gradient(135deg,#5fd18a 55%,#f2c84b 55%)}
+.bs-card .row .P{background:#7fb6ff}.bs-card .row .Rh{background:#ff8a80}.bs-card .row .cur{outline:2px solid #c2185b;outline-offset:0;box-shadow:0 0 6px #ff4fa0}
+.bs-card .acc{font-size:10.5px;color:#7a4a5e;margin-top:6px}
+.bs-card.busy .act,.bs-card.busy .row{opacity:.55}
+@media (max-width:640px){.bs-card{position:relative;top:auto;right:auto;width:100%;order:-1;margin-bottom:4px}.bs-card .row{display:none}}
 @keyframes advise{50%{box-shadow:0 0 0 2px rgba(124,255,178,.55),0 0 6px rgba(124,255,178,.3)}}
 @media (prefers-reduced-motion:reduce){.btn.advise{animation:none}}
-@media (max-width:600px){.coach small{display:none}}
 #chartModal .sheet{width:min(760px,96vw)}
 .bs-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .bs{border-collapse:separate;border-spacing:2px;width:100%;min-width:420px;table-layout:fixed;margin:2px 0 14px;font-size:clamp(11px,1.6vw,13px);font-variant-numeric:tabular-nums}
@@ -67,7 +77,7 @@
   <div class="bj-grid">
     <div class="left"><section class="rail"><div class="felt" id="felt">
       <div class="coach-ctl"><button class="btn" id="hintBtn" aria-pressed="true" title="Show the basic-strategy move (key: T)">💡 Hints on</button><button class="btn" id="chartBtn" title="Basic strategy chart (key: C)">Chart</button></div>
-      <div class="coach-note" id="coachNote" aria-live="polite"></div><div class="coach" id="coach" hidden aria-live="polite"></div>
+      <div class="coach-note" id="coachNote" aria-live="polite"></div><div class="bs-card" id="bsCard" aria-live="polite"></div>
       <div class="dz"><div class="cards" id="dCards"></div><div class="meta"><span class="tag" id="dTot" hidden></span></div></div>
       <div class="arc"><div class="felt-print big">Blackjack pays 3 to 2</div><div class="felt-print">Dealer stands on all 17s · Insurance pays 2 to 1</div></div>
       <div class="insure" id="insure" hidden><span>Insurance?</span><button class="btn pink" id="insYes">Yes</button><button class="btn" id="insNo">No thanks</button></div>
@@ -139,13 +149,32 @@ function advice(){                                         // the basic-strategy
   }
   return {action: s.action, why};
 }
+function curRow(){                                         // [kind, key, upIdx] of the chart row for the hand on screen
+  if (!round || round.phase !== 'player' || phase !== 'play') return null;
+  const h = round.hand, v = BJ.value(h.cards), u = BJ.cardVal(round.upcard), ui = BJ.UP.indexOf(u === 1 ? 11 : u);
+  if (BJ.isPair(h.cards) && round.canSplit()){ const p = BJ.cardVal(h.cards[0]); return ['pair', p === 1 ? 11 : p, ui]; }
+  if (v.soft && v.total >= 12 && v.total <= 21) return ['soft', v.total, ui];
+  if (!v.soft) return ['hard', Math.max(4, Math.min(v.total, 21)), ui];
+  return null;
+}
+let lastCard = '';
 function updateCoach(){
-  const el = $('#coach'); $$('#acts .btn.advise, #insure .btn.advise').forEach(b => b.classList.remove('advise'));
-  const a = hintsOn && !busy ? advice() : null;
-  if (!a){ el.hidden = true; return; }
-  const acc = coachStats.n ? `<span class="acc">${coachStats.ok}/${coachStats.n} on strategy</span>` : '';
-  el.innerHTML = `<span>Strategy:</span><b>${ACT_NAME[a.action]}</b>${a.why ? `<small>${a.why}</small>` : ''}${acc}`; el.hidden = false;
-  const b = $(ACT_BTN[a.action]); if (b) b.classList.add('advise');
+  $$('#acts .btn.advise, #insure .btn.advise').forEach(b => b.classList.remove('advise'));
+  const el = $('#bsCard'); el.hidden = !hintsOn; if (!hintsOn) return;
+  const a = advice(), acc = coachStats.n ? `<div class="acc">${coachStats.ok}/${coachStats.n} on strategy this visit</div>` : '';
+  if (busy && round && phase === 'play'){ el.classList.add('busy'); return; }   // mid-animation: keep the last advice, dimmed
+  el.classList.remove('busy');
+  let html;
+  if (!a) html = `<div class="k">Perfect strategy</div><div class="act idle">${phase === 'betting' ? 'Place a bet — strategy will appear here' : 'Dealer’s turn…'}</div>${acc}`;
+  else {
+    const parts = (a.why || '').split(' · '), r = a.action === 'noins' ? null : curRow();
+    const desc = a.action === 'noins' ? 'Dealer shows an Ace' : parts[0] ? parts[0].replace(' vs ', ' vs dealer ') : 'Split Aces get one card';
+    const why = a.action === 'noins' ? 'Never take insurance or even money' : parts[1] ? parts[1][0].toUpperCase() + parts[1].slice(1) : '';
+    const row = r ? `<div class="row" aria-hidden="true">${BJ.STRAT[r[0]][r[1]].map((c, i) => `<div><b>${BJ.UP[i] === 11 ? 'A' : BJ.UP[i]}</b><span class="${c}${i === r[2] ? ' cur' : ''}">${c === 'Rh' ? 'R' : c}</span></div>`).join('')}</div>` : '';
+    html = `<div class="k">Perfect strategy</div><div class="act ${a.action}">${ACT_NAME[a.action]}</div><div class="hd">${desc}</div>${why ? `<div class="why">${why}</div>` : ''}${row}${acc}`;
+    const b = $(ACT_BTN[a.action]); if (b) b.classList.add('advise');
+  }
+  if (html !== lastCard){ el.innerHTML = html; lastCard = html; }
 }
 function coachJudge(chosen){                               // call BEFORE acting; brief note if the player went off-strategy
   const a = advice(); if (!a || a.action === 'stand' && !a.why) return;
