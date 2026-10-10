@@ -60,6 +60,19 @@
 .btn.rm.on{background:linear-gradient(#e9567f,#a3214d);color:#fff}
 .small{font-size:12px;color:#cdb9c2;margin-top:6px;line-height:1.45}
 .ontbl{font-size:12.5px;color:#e6d9de;margin-top:4px}.ontbl b{color:#fff}
+#hintModal .sheet{width:min(700px,96vw)}
+.hn-now{margin:2px 0 14px;padding:10px 12px;border-radius:12px;border:1px solid rgba(243,220,149,.55);background:rgba(243,220,149,.09);font-size:14px;line-height:1.45;color:#fff6dc}
+.hn-now b.l{display:block;font:600 10.5px Georgia,serif;letter-spacing:.22em;text-transform:uppercase;color:var(--gold2);margin-bottom:3px}
+.hn-now .warn{display:block;margin-top:5px;color:#ffb3a8;font-size:13px}
+.hn h4{margin:14px 0 6px;font-family:Georgia,serif;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);font-size:13.5px}
+.hn p,.hn li{font-size:13.5px;line-height:1.5;color:#eadfd0}.hn p{margin:0 0 8px}.hn ol,.hn ul{margin:0 0 8px;padding-left:20px}.hn li{margin-bottom:4px}
+.hn b{color:#fff}
+.hn-t{width:100%;border-collapse:separate;border-spacing:0 3px;font-size:13px;margin:0 0 6px}
+.hn-t th{font:600 10.5px Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d9c79a;text-align:left;padding:2px 6px}
+.hn-t td{padding:6px;background:rgba(255,255,255,.05);color:#efe6dc;vertical-align:top}.hn-t td:first-child{border-radius:6px 0 0 6px}.hn-t td:last-child{border-radius:0 6px 6px 0;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
+.hn-t td small{display:block;color:#bfa9b3;font-size:11.5px;margin-top:1px}
+.hn-t tr.g td:last-child{color:var(--up)}.hn-t tr.ok td:last-child{color:#f2c84b}.hn-t tr.bad td:last-child{color:var(--down)}
+.hn-t td.rk{width:1.6em;text-align:center;color:var(--gold2);font-weight:700}
 </style>
 </head>
 <body>
@@ -99,7 +112,7 @@
       </div>
     </div></section>
     <div class="rack" id="rack"><div class="actions">
-      <button class="btn rm" id="rmBtn" title="Tap bets to take them down">Remove</button><button class="btn" id="undoBtn">Undo</button><button class="btn gold" id="rollBtn">Roll</button>
+      <button class="btn" id="hintBtn" title="How to play &amp; best bets (key: H)">💡 Hints</button><button class="btn rm" id="rmBtn" title="Tap bets to take them down">Remove</button><button class="btn" id="undoBtn">Undo</button><button class="btn gold" id="rollBtn">Roll</button>
     </div></div></div>
     <aside class="side">
       <div class="panel"><h3>On the table</h3><div class="ontbl" id="ontbl"></div><div class="small" id="tip"></div></div>
@@ -125,6 +138,47 @@
     </aside>
   </div>
 </main>
+<div class="modal" id="hintModal" hidden role="dialog" aria-modal="true" aria-labelledby="hintTitle"><div class="sheet">
+  <div class="sheet-hd"><h2 id="hintTitle">Craps Hints</h2><p>How a round works · best bets · bets to skip</p><button class="x" id="hintClose" aria-label="Close">×</button></div>
+  <div class="sheet-bd hn">
+    <div class="hn-now" id="hintNow"></div>
+    <h4>How a round works</h4>
+    <ol>
+      <li><b>Come-out roll.</b> The puck says <b>OFF</b>. Bet the Pass Line, then roll. <b>7 or 11</b> wins right away; <b>2, 3 or 12</b> (“craps”) loses. Any other number — <b>4, 5, 6, 8, 9 or 10</b> — becomes <b>the point</b>.</li>
+      <li><b>The point is set.</b> The puck flips to <b>ON</b> over that number. Now keep rolling until one of two things happens:</li>
+      <li>The <b>point rolls again</b> → Pass Line wins. Or a <b>7 rolls first</b> (“seven out”) → Pass Line loses. Every other number in between doesn't matter to the Pass Line.</li>
+      <li>After either one, a new come-out roll starts.</li>
+    </ol>
+    <p>Notice the switch: on the come-out a 7 is your friend, but once a point is set the 7 is what beats you.</p>
+    <h4>The best play</h4>
+    <p><b>Bet the Pass Line, then take max odds once a point is set.</b> Tap the Pass Line again after the point to add odds behind it. The odds bet pays true odds, so it has <b>no house edge at all</b> — the more of your money sits in odds instead of the flat bet, the better.</p>
+    <p>This table allows <b>3-4-5× odds</b>: up to <b>3×</b> your Pass bet when the point is 4 or 10 (pays 2:1), <b>4×</b> on 5 or 9 (pays 3:2), <b>5×</b> on 6 or 8 (pays 6:5). Every one of those works out to a win of 6× your flat bet. With full odds every time, the house edge on everything you bet drops to about <b>0.37%</b>.</p>
+    <p>Want more action? Make <b>Come</b> bets — each one works like a fresh Pass Line bet on the next roll — and take odds on those too. Bet sizes that divide cleanly help: on 6/8 odds use multiples of $5, on 5/9 use even amounts, or payouts get rounded down.</p>
+    <h4>Bets ranked by house edge</h4>
+    <table class="hn-t"><tr><th></th><th>Bet</th><th style="text-align:right">Edge</th></tr>
+      <tr class="g"><td class="rk">1</td><td>Odds behind Pass / Come<small>True odds 2:1 · 3:2 · 6:5, up to 3-4-5×</small></td><td>0%</td></tr>
+      <tr class="g"><td class="rk">1</td><td>Lay odds behind Don't Pass / Don't Come<small>Pays 1:2 · 2:3 · 5:6, up to 6×</small></td><td>0%</td></tr>
+      <tr class="g"><td class="rk">2</td><td>Don't Pass / Don't Come<small>Bet against the shooter; 12 is a push</small></td><td>1.36%</td></tr>
+      <tr class="g"><td class="rk">3</td><td>Pass Line / Come<small>The classic bet — pair it with odds</small></td><td>1.41%</td></tr>
+      <tr class="g"><td class="rk">4</td><td>Place 6 or 8<small>Pays 7:6 — bet in multiples of $6</small></td><td>1.52%</td></tr>
+      <tr class="ok"><td class="rk">5</td><td>Field<small>One roll; 2 pays double, 12 pays triple</small></td><td>2.78%</td></tr>
+      <tr class="ok"><td class="rk">6</td><td>Place 5 or 9<small>Pays 7:5</small></td><td>4.00%</td></tr>
+      <tr class="bad"><td class="rk">7</td><td>Place 4 or 10<small>Pays 9:5</small></td><td>6.67%</td></tr>
+    </table>
+    <h4>Bets to skip</h4>
+    <p>The center of the table looks fun and pays big, but these are the house's favorite bets:</p>
+    <table class="hn-t">
+      <tr class="bad"><td>Hard 6 / Hard 8<small>Pays 9:1</small></td><td>9.09%</td></tr>
+      <tr class="bad"><td>Hard 4 / Hard 10<small>Pays 7:1</small></td><td>11.1%</td></tr>
+      <tr class="bad"><td>Any Craps · Yo (11) · Ace-Deuce (3)<small>One roll · pay 7:1 · 15:1 · 15:1</small></td><td>11.1%</td></tr>
+      <tr class="bad"><td>Aces (2) · Boxcars (12)<small>One roll · pays 30:1</small></td><td>13.9%</td></tr>
+      <tr class="bad"><td>Any Seven<small>One roll · pays 4:1 — the worst bet on the table</small></td><td>16.7%</td></tr>
+    </table>
+    <h4>Pass or Don't Pass?</h4>
+    <p>Don't Pass is a hair better (1.36% vs 1.41%, and about 0.27% with full lay odds), but you're betting against everyone else at the table and laying more than you win on the odds. Either is a good choice — Pass is the friendlier, more common one.</p>
+    <p style="margin-bottom:12px">Remember: no bet in craps beats the house over time. Low-edge bets just make your bankroll last longer.</p>
+  </div>
+</div></div>
 <script src="cc-core.js?v=4"></script>
 <script src="craps-rules.js?v=1"></script>
 <script>
@@ -173,6 +227,7 @@ function render(){
   $('#ontbl').innerHTML = t ? Object.entries(b).map(([k, v]) => `${C.name(k)} <b>${fmt(v)}</b>`).join(' · ') + `<br>Total on the layout <b>${fmt(t)}</b>` : 'No bets on the table.';
   $('#tip').textContent = st.point ? `Point is ${st.point}. Tap the Pass Line (or a Come number) to add odds — they pay true odds with no house edge.` : 'Come-out roll: bet the Pass Line or Don\'t Pass. 7 or 11 wins the Pass Line; 2, 3 or 12 loses.';
   $('#passHint').textContent = st.point ? (b.pass ? `odds up to ${fmt(b.pass * C.ODDS_MULT[st.point])}` : 'contract bets only after the come-out') : 'tap again after the point for 3-4-5× odds';
+  if (typeof hints !== 'undefined' && hints.isOpen) $('#hintNow').innerHTML = hintNow();
   $('#rollBtn').disabled = busy; $('#undoBtn').disabled = busy || !log.length; $('#rmBtn').classList.toggle('on', removing);
 }
 function add(k){
@@ -234,11 +289,44 @@ async function roll(){
   setTimeout(() => $$('#felt .cr').forEach(e => e.classList.remove('lose')), 1600);
   if (Bank.value < 5 && !total()){ await wait(1500); Bank.refill(); }
 }
+// ---- hints modal (static reference + one live "what to do now" line) ----
+const RATIO = {4:'2:1', 5:'3:2', 6:'6:5', 8:'6:5', 9:'3:2', 10:'2:1'};
+const BAD = {any7:'16.7%', craps:'11.1%', yo:'11.1%', ad:'11.1%', aces:'13.9%', box:'13.9%', hard_4:'11.1%', hard_10:'11.1%', hard_6:'9.09%', hard_8:'9.09%', place_4:'6.67%', place_10:'6.67%'};
+function hintNow(){
+  const b = st.bets, P = st.point; let msg;
+  if (!P){
+    if (b.pass) msg = `Come-out roll: your Pass Line is down — Roll. 7 or 11 wins, 2, 3 or 12 loses, anything else becomes the point.`;
+    else if (b.dp) msg = `Come-out roll: your Don't Pass is down — Roll. 2 or 3 wins, 12 pushes, 7 or 11 loses.`;
+    else msg = `Come-out roll: place a Pass Line bet, then Roll.`;
+  } else {
+    const m = C.ODDS_MULT[P];
+    if (b.pass){
+      const room = Math.max(0, b.pass * m - (b.passO || 0));
+      msg = room >= 1 ? `Point is ${P}: add odds behind your Pass Line, up to ${m}× (${fmt(b.pass * m)} total, ${fmt(room)} more) — tap the Pass Line. Odds pay ${RATIO[P]} with no house edge.`
+                      : `Point is ${P}: you have max odds behind your Pass Line. Roll — you want a ${P} before a 7. For more action, make a Come bet and take odds on it.`;
+    } else if (b.dp){
+      const room = Math.max(0, b.dp * C.LAY_MULT - (b.dpO || 0));
+      msg = room >= 1 ? `Point is ${P}: you can lay odds behind your Don't Pass, up to 6× (${fmt(room)} more). You want a 7 before the ${P}.`
+                      : `Point is ${P}: max lay odds are down. Roll — you want a 7 before the ${P}.`;
+    } else msg = `Point is ${P}: Pass Line bets can only be made on the come-out roll, so make a Come bet instead — it works like a new Pass Line bet — then take odds on it once it moves to a number.`;
+    const open = PTS.filter(N => b['come_' + N] && (b['comeO_' + N] || 0) < b['come_' + N] * C.ODDS_MULT[N]);
+    if (open.length) msg += ` Your Come bet on ${open.join(' & ')} can take odds too (tap its Come box).`;
+  }
+  const bad = Object.keys(b).filter(k => BAD[k]).map(k => `${C.name(k)} (${BAD[k]} edge)`);
+  return `<b class="l">What to do now</b>${msg}` + (bad.length ? `<span class="warn">Heads up: ${bad.join(', ')} ${bad.length > 1 ? 'are' : 'is a'} high-edge bet${bad.length > 1 ? 's' : ''}.</span>` : '');
+}
+const hints = {
+  get isOpen(){ return !$('#hintModal').hidden; },
+  open(){ $('#hintNow').innerHTML = hintNow(); const m = $('#hintModal'); m.hidden = false; m.querySelector('.sheet-bd').scrollTop = 0; requestAnimationFrame(() => m.classList.add('show')); $('#hintClose').focus(); },
+  close(){ const m = $('#hintModal'); m.classList.remove('show'); setTimeout(() => { m.hidden = true; }, 200); }
+};
+$('#hintBtn').onclick = () => { Snd.click(); hints.open(); };
+$('#hintClose').onclick = () => hints.close(); $('#hintModal').addEventListener('click', e => { if (e.target.id === 'hintModal') hints.close(); });
 $('#rollBtn').onclick = roll;
-document.addEventListener('keydown', e => { if (LBUI.isOpen || e.metaKey || e.ctrlKey || /input/i.test(e.target.tagName)) return; if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); roll(); } });
+document.addEventListener('keydown', e => { if (LBUI.isOpen || e.metaKey || e.ctrlKey || /input/i.test(e.target.tagName)) return; if (hints.isOpen){ if (e.key === 'Escape' || e.key.toLowerCase() === 'h') hints.close(); return; } if (e.key.toLowerCase() === 'h'){ hints.open(); return; } if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); roll(); } });
 render(); UI.flash(st.point ? `Point is ${st.point} — your bets are still on the table` : 'Bet the Pass Line, then Roll');
 if (Bank.value < 5 && !total()) Bank.refill();
-window.__cr = { roll, add, takeDown, get st(){ return st; }, get busy(){ return busy; }, set chip(v){ rack.value = v; }, rollFixed: null };
+window.__cr = { roll, add, takeDown, get st(){ return st; }, get busy(){ return busy; }, set chip(v){ rack.value = v; }, rollFixed: null, hints, hintNow };
 })();
 </script>
 </body>
